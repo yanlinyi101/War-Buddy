@@ -22,32 +22,40 @@ offset_left = 16.0
 offset_top = 16.0
 offset_right = -16.0
 offset_bottom = -16.0
+mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="HudRoot/MarginContainer"]
+mouse_filter = 2
 
 [node name="TopRow" type="HBoxContainer" parent="HudRoot/MarginContainer/VBox"]
 size_flags_horizontal = 3
+mouse_filter = 2
 
 [node name="HeroStatusLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
 unique_name_in_owner = true
 text = "Hero HP: 100 / 100"
+mouse_filter = 2
 
 [node name="HeroTargetLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
 unique_name_in_owner = true
 text = "Target: None"
+mouse_filter = 2
 
 [node name="HeroActionLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
 unique_name_in_owner = true
 text = "Action: Idle"
+mouse_filter = 2
 
 [node name="BuildingsRemainingLabel" type="Label" parent="HudRoot/MarginContainer/VBox"]
 unique_name_in_owner = true
 text = "Enemy structures remaining: 0"
+mouse_filter = 2
 
 [node name="HelpLabel" type="Label" parent="HudRoot/MarginContainer/VBox"]
 unique_name_in_owner = true
 autowrap_mode = 3
 text = "Controls"
+mouse_filter = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="HudRoot/MarginContainer/VBox"]
 size_flags_horizontal = 3
@@ -55,9 +63,11 @@ size_flags_vertical = 3
 
 [node name="CommandPanel" type="VBoxContainer" parent="HudRoot/MarginContainer/VBox/PanelContainer"]
 custom_minimum_size = Vector2(520, 220)
+mouse_filter = 2
 
 [node name="PanelTitle" type="Label" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
 text = "Deputy Command Console"
+mouse_filter = 2
 
 [node name="ChannelSelector" type="OptionButton" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
 unique_name_in_owner = true
@@ -67,6 +77,7 @@ unique_name_in_owner = true
 placeholder_text = "Type an order for combat or economy"
 
 [node name="ButtonRow" type="HBoxContainer" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+mouse_filter = 2
 
 [node name="SubmitButton" type="Button" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel/ButtonRow"]
 unique_name_in_owner = true
@@ -79,6 +90,7 @@ text = "Voice (Soon)"
 [node name="VoiceStatusLabel" type="Label" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
 unique_name_in_owner = true
 text = "MVP supports text commands only."
+mouse_filter = 2
 
 [node name="CommandHistory" type="RichTextLabel" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
 unique_name_in_owner = true
@@ -100,8 +112,10 @@ color = Color(0, 0, 0, 0.72)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 
 [node name="VictoryLabel" type="Label" parent="HudRoot/VictoryOverlay/VictoryCenter"]
 text = "Victory — all enemy buildings destroyed."
 horizontal_alignment = 1
 vertical_alignment = 1
+mouse_filter = 2
