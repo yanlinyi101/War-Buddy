@@ -46,6 +46,8 @@ func _destroy() -> void:
 	is_destroyed = true
 	if has_node("CollisionShape3D"):
 		$CollisionShape3D.disabled = true
+	if has_node("NavigationObstacle3D"):
+		$NavigationObstacle3D.avoidance_enabled = false
 	# Emit before the tween so match-state / victory reacts on the same frame
 	# as the killing blow, not after the visual settles.
 	destroyed.emit(building_id)

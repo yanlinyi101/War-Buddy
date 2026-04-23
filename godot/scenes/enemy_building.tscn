@@ -19,6 +19,11 @@ shape = SubResource("BoxShape3D_building")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_building")
 
+[node name="NavigationObstacle3D" type="NavigationObstacle3D" parent="."]
+radius = 1.6
+height = 2.0
+avoidance_enabled = true
+
 [node name="HpLabel3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
 billboard = 1
