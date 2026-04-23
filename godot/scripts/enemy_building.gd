@@ -38,12 +38,25 @@ func _update_visuals() -> void:
 		material.albedo_color = Color(1.0, 0.25 + ratio * 0.45, 0.25 + ratio * 0.25)
 		mesh_instance.material_override = material
 
+const DESTROY_TWEEN_DURATION := 0.35
+
 func _destroy() -> void:
 	if is_destroyed:
 		return
 	is_destroyed = true
-	visible = false
-	process_mode = Node.PROCESS_MODE_DISABLED
 	if has_node("CollisionShape3D"):
 		$CollisionShape3D.disabled = true
+	# Emit before the tween so match-state / victory reacts on the same frame
+	# as the killing blow, not after the visual settles.
 	destroyed.emit(building_id)
+	print("[RTSMVP] Enemy building destroyed: %s" % building_id)
+
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(self, "scale", Vector3.ONE * 0.05, DESTROY_TWEEN_DURATION)
+	if hp_label != null:
+		tween.tween_property(hp_label, "modulate:a", 0.0, DESTROY_TWEEN_DURATION)
+	if mesh_instance != null and mesh_instance.material_override is StandardMaterial3D:
+		var mat: StandardMaterial3D = mesh_instance.material_override
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		tween.tween_property(mat, "albedo_color:a", 0.0, DESTROY_TWEEN_DURATION)
+	tween.chain().tween_callback(queue_free)
