@@ -55,4 +55,4 @@
 - [ ] All engine code lives under `godot/`
 - [ ] No `unity/` tree remains in this repo (migration complete)
 - [ ] `godot/README.md` states Godot is the primary implementation path
-- [ ] `docs/specs/` refers to Godot nodes / scripts / signals, not Unity `MonoBehaviour` / scenes
+- [ ] `docs/specs/` refers to Godot nodes / scripts / signals, not legacy Unity engine concepts

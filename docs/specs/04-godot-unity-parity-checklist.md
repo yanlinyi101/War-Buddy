@@ -10,7 +10,7 @@ Repo: `War Buddy` (extracted from `war-of-agents`)
 ## What was audited during the final pass
 
 The following historical Unity sources were compared against the current Godot implementation:
-- the original Unity `SharedOfficeWars` MVP scaffold (no longer in this repo)
+- the original Unity MVP scaffold (no longer in this repo)
 - the original `rts-mvp-scene-hookup-checklist.md`
 - `docs/specs/01-rts-mvp-design.md`
 - `docs/specs/02-rts-mvp-implementation-plan.md`

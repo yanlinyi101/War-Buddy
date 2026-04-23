@@ -34,7 +34,7 @@ func _ready() -> void:
 	_register_enemy_buildings()
 	_refresh_command_log()
 	hud.update_buildings_remaining(match_state.enemy_buildings_remaining)
-	print("RTS MVP bootstrap complete")
+	print("[RTSMVP] Bootstrap: hero=%s hud=%s buildings=%d" % [hero.name, hud.name, match_state.enemy_buildings_remaining])
 
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
@@ -44,19 +44,19 @@ func _on_command_submitted(channel: String, text: String) -> void:
 	if match_state.is_match_locked:
 		return
 	command_log.submit_command(channel, text)
-	print("Command submitted: ", channel, " / ", text)
+	print("[RTSMVP] Command submitted: %s -> %s" % [channel, text])
 
 func _refresh_command_log(_payload = null, _extra = null) -> void:
 	hud.refresh_command_log(command_log.get_recent_commands())
 
 func _on_command_status_changed(command_id: String, new_status: String) -> void:
 	_refresh_command_log()
-	print("Command status changed: ", command_id, " -> ", new_status)
+	print("[RTSMVP] Command status updated: %s -> %s" % [command_id, new_status])
 
 func _on_voice_placeholder_clicked() -> void:
-	print("Voice command placeholder pressed")
+	print("[RTSMVP] Voice placeholder clicked")
 
 func _on_victory_triggered() -> void:
 	hud.show_victory()
 	hero.set_input_locked(true)
-	print("Victory triggered")
+	print("[RTSMVP] Victory triggered")

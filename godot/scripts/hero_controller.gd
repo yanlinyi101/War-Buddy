@@ -91,10 +91,12 @@ func _handle_primary_click(screen_position: Vector2) -> void:
 		has_move_target = true
 		hero_state.set_target(collider.name)
 		target_selected.emit(collider)
+		print("[RTSMVP] Hero input: target %s at %s" % [collider.name, collider.global_position])
 	else:
 		clear_target()
 		move_target = result.get("position", global_position)
 		has_move_target = true
+		print("[RTSMVP] Hero input: move to %s" % move_target)
 
 func clear_target() -> void:
 	target_building = null
