@@ -59,6 +59,24 @@ jobs:
           path: godot/boot.log
           if-no-files-found: ignore
 
+      - name: GUT headless tests
+        working-directory: godot
+        run: |
+          set -euxo pipefail
+          godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit 2>&1 | tee gut.log
+          if ! grep -q 'All tests passed' gut.log; then
+            echo "::error::GUT tests failed"
+            exit 1
+          fi
+
+      - name: Upload gut log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gut-log
+          path: godot/gut.log
+          if-no-files-found: ignore
+
   docs-lint:
     name: Docs sanity check
     runs-on: ubuntu-latest
