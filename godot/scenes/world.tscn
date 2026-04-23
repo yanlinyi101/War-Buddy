@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://worldscene"]
+[gd_scene load_steps=10 format=3 uid="uid://worldscene"]
 
 [ext_resource type="PackedScene" path="res://scenes/commander_hero.tscn" id="1_hero"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_building.tscn" id="2_building"]
@@ -10,19 +10,30 @@ size = Vector2(36, 36)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(36, 0.5, 36)
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_ground"]
+geometry_parsed_geometry_type = 1
+geometry_source_geometry_mode = 0
+agent_radius = 0.75
+agent_height = 1.75
+cell_size = 0.25
+cell_height = 0.25
+
 [node name="World" type="Node3D"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 rotation = Vector3(-0.8, 0.8, 0.0)
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_ground")
+
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D"]
 collision_layer = 1
 collision_mask = 1
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Ground"]
 shape = SubResource("BoxShape3D_ground")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground"]
 mesh = SubResource("PlaneMesh_ground")
 
 [node name="CommanderHero" parent="." instance=ExtResource("1_hero")]

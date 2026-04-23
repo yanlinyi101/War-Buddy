@@ -6,6 +6,7 @@ const MatchStateScript = preload("res://scripts/match_state.gd")
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
 @onready var hud = $HudRoot
+@onready var navigation_region: NavigationRegion3D = $World/NavigationRegion3D
 
 var command_log = null
 var match_state = null
@@ -22,6 +23,9 @@ func _ready() -> void:
 	if hero == null:
 		push_error("Commander hero binding failed during bootstrap")
 		return
+
+	if navigation_region != null:
+		navigation_region.bake_navigation_mesh(false)
 
 	hud.bind_hero_state(hero.hero_state)
 	hud.command_submitted.connect(_on_command_submitted)

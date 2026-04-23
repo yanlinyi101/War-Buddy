@@ -12,6 +12,7 @@ const ATTACK_INTERVAL := 0.75
 @export var target_collision_mask := 2
 
 @onready var hero_state = $HeroState
+@onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var camera: Camera3D = get_viewport().get_camera_3d()
 
 var move_target := Vector3.ZERO
@@ -22,6 +23,7 @@ var input_locked := false
 
 func _ready() -> void:
 	move_target = global_position
+	nav_agent.target_position = global_position
 
 func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:
@@ -61,14 +63,21 @@ func _physics_process(delta: float) -> void:
 
 	if has_move_target:
 		var flat_target := Vector3(move_target.x, global_position.y, move_target.z)
-		var offset := flat_target - global_position
-		if offset.length() <= 0.2:
+		if nav_agent.target_position.distance_to(flat_target) > 0.01:
+			nav_agent.target_position = flat_target
+		if nav_agent.is_navigation_finished():
 			has_move_target = false
 			velocity = Vector3.ZERO
 			if not is_instance_valid(target_building):
 				hero_state.set_action("Idle")
 		else:
-			velocity = offset.normalized() * MOVE_SPEED
+			var next_point := nav_agent.get_next_path_position()
+			var offset := next_point - global_position
+			offset.y = 0.0
+			if offset.length() <= 0.001:
+				velocity = Vector3.ZERO
+			else:
+				velocity = offset.normalized() * MOVE_SPEED
 	else:
 		velocity = Vector3.ZERO
 

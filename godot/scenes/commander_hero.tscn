@@ -23,3 +23,11 @@ mesh = SubResource("SphereMesh_body")
 
 [node name="HeroState" type="Node" parent="."]
 script = ExtResource("2_state")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.4
+target_desired_distance = 0.3
+radius = 0.7
+height = 1.6
+avoidance_enabled = false
+

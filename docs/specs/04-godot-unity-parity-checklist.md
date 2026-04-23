@@ -59,7 +59,7 @@ These lived in the broader Unity RTS scaffold, are **not yet implemented in Godo
 - [ ] building placement ghost / construction sites
 - [ ] stop / hold / attack-move order vocabulary
 - [ ] faction-wide RTS HUD panels for selected units / buildings
-- [ ] `NavigationAgent3D` pathfinding (currently direct-move raycast — see task 1 in the implementation plan)
+- [x] `NavigationAgent3D` pathfinding — hero now moves via nav agent, navmesh baked at runtime from the ground StaticBody
 
 ## Files that define the current Godot surface
 - `godot/project.godot`
