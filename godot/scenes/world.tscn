@@ -1,0 +1,48 @@
+[gd_scene load_steps=9 format=3 uid="uid://worldscene"]
+
+[ext_resource type="PackedScene" path="res://scenes/commander_hero.tscn" id="1_hero"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_building.tscn" id="2_building"]
+[ext_resource type="Script" path="res://scripts/rts_camera.gd" id="3_camera"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(36, 36)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(36, 0.5, 36)
+
+[node name="World" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.8, 0.8, 0.0)
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="CommanderHero" parent="." instance=ExtResource("1_hero")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.75, 6)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 20, 18)
+current = true
+projection = 1
+size = 22.0
+script = ExtResource("3_camera")
+
+[node name="EnemyBuildingA" parent="." instance=ExtResource("2_building")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1, -2)
+building_id = "enemy_a"
+
+[node name="EnemyBuildingB" parent="." instance=ExtResource("2_building")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1, 4)
+building_id = "enemy_b"
+
+[node name="EnemyBuildingC" parent="." instance=ExtResource("2_building")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 8)
+building_id = "enemy_c"

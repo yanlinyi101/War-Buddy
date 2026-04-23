@@ -1,0 +1,107 @@
+[gd_scene load_steps=4 format=3 uid="uid://mainscene"]
+
+[ext_resource type="PackedScene" path="res://scenes/world.tscn" id="1_world"]
+[ext_resource type="Script" path="res://scripts/bootstrap.gd" id="2_bootstrap"]
+[ext_resource type="Script" path="res://scripts/hud_root.gd" id="3_hud"]
+
+[node name="Main" type="Node"]
+script = ExtResource("2_bootstrap")
+
+[node name="World" parent="." instance=ExtResource("1_world")]
+unique_name_in_owner = true
+
+[node name="HudRoot" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_hud")
+
+[node name="MarginContainer" type="MarginContainer" parent="HudRoot"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+
+[node name="VBox" type="VBoxContainer" parent="HudRoot/MarginContainer"]
+
+[node name="TopRow" type="HBoxContainer" parent="HudRoot/MarginContainer/VBox"]
+size_flags_horizontal = 3
+
+[node name="HeroStatusLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
+unique_name_in_owner = true
+text = "Hero HP: 100 / 100"
+
+[node name="HeroTargetLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
+unique_name_in_owner = true
+text = "Target: None"
+
+[node name="HeroActionLabel" type="Label" parent="HudRoot/MarginContainer/VBox/TopRow"]
+unique_name_in_owner = true
+text = "Action: Idle"
+
+[node name="BuildingsRemainingLabel" type="Label" parent="HudRoot/MarginContainer/VBox"]
+unique_name_in_owner = true
+text = "Enemy structures remaining: 0"
+
+[node name="HelpLabel" type="Label" parent="HudRoot/MarginContainer/VBox"]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Controls"
+
+[node name="PanelContainer" type="PanelContainer" parent="HudRoot/MarginContainer/VBox"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CommandPanel" type="VBoxContainer" parent="HudRoot/MarginContainer/VBox/PanelContainer"]
+custom_minimum_size = Vector2(520, 220)
+
+[node name="PanelTitle" type="Label" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+text = "Deputy Command Console"
+
+[node name="ChannelSelector" type="OptionButton" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+unique_name_in_owner = true
+
+[node name="CommandInput" type="LineEdit" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+unique_name_in_owner = true
+placeholder_text = "Type an order for combat or economy"
+
+[node name="ButtonRow" type="HBoxContainer" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+
+[node name="SubmitButton" type="Button" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel/ButtonRow"]
+unique_name_in_owner = true
+text = "Submit"
+
+[node name="VoiceButton" type="Button" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel/ButtonRow"]
+unique_name_in_owner = true
+text = "Voice (Soon)"
+
+[node name="VoiceStatusLabel" type="Label" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+unique_name_in_owner = true
+text = "MVP supports text commands only."
+
+[node name="CommandHistory" type="RichTextLabel" parent="HudRoot/MarginContainer/VBox/PanelContainer/CommandPanel"]
+unique_name_in_owner = true
+bbcode_enabled = false
+fit_content = true
+scroll_active = true
+size_flags_vertical = 3
+text = "No commands yet."
+
+[node name="VictoryOverlay" type="ColorRect" parent="HudRoot"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.72)
+
+[node name="VictoryCenter" type="CenterContainer" parent="HudRoot/VictoryOverlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VictoryLabel" type="Label" parent="HudRoot/VictoryOverlay/VictoryCenter"]
+text = "Victory — all enemy buildings destroyed."
+horizontal_alignment = 1
+vertical_alignment = 1

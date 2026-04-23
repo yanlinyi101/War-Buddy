@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://commanderhero"]
+
+[ext_resource type="Script" path="res://scripts/hero_controller.gd" id="1_hero"]
+[ext_resource type="Script" path="res://scripts/hero_state.gd" id="2_state"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+radius = 0.6
+height = 1.4
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.6
+height = 1.4
+
+[node name="CommanderHero" type="CharacterBody3D"]
+script = ExtResource("1_hero")
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_body")
+
+[node name="HeroState" type="Node" parent="."]
+script = ExtResource("2_state")
