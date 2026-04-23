@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.6.2-stable
+
+jobs:
+  validate:
+    name: Headless boot + script parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Install Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -euxo pipefail
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+
+      - name: Print Godot version
+        run: godot --version
+
+      - name: Headless import pass
+        working-directory: godot
+        run: godot --headless --import --quit-after 500 || true
+
+      - name: Headless boot smoke test
+        working-directory: godot
+        run: |
+          set -euxo pipefail
+          godot --headless --quit-after 120 2>&1 | tee boot.log
+          if grep -Eiq 'SCRIPT ERROR|Parse Error|ERROR: Failed|Missing script' boot.log; then
+            echo "::error::Headless boot reported script/parse errors"
+            exit 1
+          fi
+
+      - name: Upload boot log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot-log
+          path: godot/boot.log
+          if-no-files-found: ignore
+
+  docs-lint:
+    name: Docs sanity check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail on stray Unity references in specs
+        run: |
+          set -euxo pipefail
+          # Unity tree must not exist
+          if [ -d "unity" ]; then
+            echo "::error::unity/ tree must not exist — migration is complete"
+            exit 1
+          fi
+          # Specs must not reintroduce Unity-only concepts
+          if grep -REn 'MonoBehaviour|\.unity\b|Unity Test Runner|SharedOfficeWars' docs/ README.md 2>/dev/null; then
+            echo "::error::Legacy Unity reference found in docs"
+            exit 1
+          fi
+
+      - name: Check spec files exist
+        run: |
+          set -euxo pipefail
+          for f in \
+            docs/specs/01-rts-mvp-design.md \
+            docs/specs/02-rts-mvp-implementation-plan.md \
+            docs/specs/03-godot-rts-architecture-reference.md \
+            docs/specs/04-godot-unity-parity-checklist.md \
+            docs/specs/05-godot-smoke-test-checklist.md \
+            CLAUDE.md \
+            README.md
+          do
+            test -f "$f" || { echo "::error::missing $f"; exit 1; }
+          done

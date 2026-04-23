@@ -1,0 +1,18 @@
+# Build output
+build/
+godot/build/
+
+# Godot editor caches / imported resources
+godot/.godot/
+godot/.import/
+*.translation
+
+# Local-only export overrides (export_presets.cfg itself IS tracked)
+godot/.export_presets.cfg.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

@@ -1,0 +1,105 @@
+name: Release export
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build'
+        required: false
+        default: 'main'
+
+env:
+  GODOT_VERSION: 4.6.2-stable
+  GODOT_TEMPLATES_VERSION: 4.6.2.stable
+
+jobs:
+  export:
+    name: Export ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: 'Linux/X11'
+            artifact: war-buddy-linux
+            output: build/linux/war-buddy.x86_64
+          - preset: 'Windows Desktop'
+            artifact: war-buddy-windows
+            output: build/windows/war-buddy.exe
+          - preset: 'Web'
+            artifact: war-buddy-web
+            output: build/web/index.html
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Guard — export_presets.cfg must exist
+        run: |
+          set -euxo pipefail
+          if [ ! -f godot/export_presets.cfg ]; then
+            echo "::error::godot/export_presets.cfg is missing. Open the project in the Godot editor, configure Linux / Windows / Web presets with names matching this workflow, and commit export_presets.cfg."
+            exit 1
+          fi
+
+      - name: Install Godot + export templates
+        run: |
+          set -euxo pipefail
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+
+          curl -fsSL -o templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}"
+          unzip -q templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}/"
+
+      - name: Export
+        working-directory: godot
+        run: |
+          set -euxo pipefail
+          mkdir -p "$(dirname ${{ matrix.output }})"
+          # Headless import first so resources are cached
+          godot --headless --import --quit-after 500 || true
+          godot --headless --export-release "${{ matrix.preset }}" "${{ matrix.output }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: godot/build/
+          if-no-files-found: error
+
+  publish:
+    name: Attach to GitHub Release
+    needs: export
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Zip artifacts per platform
+        run: |
+          set -euxo pipefail
+          mkdir -p release
+          for d in artifacts/*/; do
+            name=$(basename "$d")
+            (cd "$d" && zip -qr "../../release/${name}.zip" .)
+          done
+          ls -la release
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          generate_release_notes: true
