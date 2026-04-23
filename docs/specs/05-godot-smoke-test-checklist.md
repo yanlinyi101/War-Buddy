@@ -1,10 +1,13 @@
 # Godot RTS MVP Smoke Test Checklist
 
+> Engine: **Godot 4.6.x** (project is pinned at 4.6 via `godot/project.godot`; 4.7+ requires a re-boot validation pass first).
+
 ## Open project
 
-- [ ] Open `war-of-agents/godot` in **Godot 4.6.x**
+- [ ] Open `War Buddy/godot` in **Godot 4.6.x**
 - [ ] Confirm the project loads without missing-script popups
 - [ ] Confirm the default run scene is `res://scenes/main.tscn`
+- [ ] Run headless boot `godot4 --headless --path godot --quit` and confirm no errors
 
 ## Scene boot
 
@@ -49,6 +52,7 @@
 
 ## Repo hygiene
 
-- [ ] Godot files live under `godot/`
-- [ ] Unity files remain untouched unless intentionally referenced for migration notes
-- [ ] README in `godot/` states Godot is the new primary implementation path
+- [ ] All engine code lives under `godot/`
+- [ ] No `unity/` tree remains in this repo (migration complete)
+- [ ] `godot/README.md` states Godot is the primary implementation path
+- [ ] `docs/specs/` refers to Godot nodes / scripts / signals, not Unity `MonoBehaviour` / scenes

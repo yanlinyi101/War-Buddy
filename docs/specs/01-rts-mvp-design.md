@@ -1,12 +1,12 @@
-# RTS MVP Design for 团结中国 hub1.8.4 scene
+# RTS MVP Design (Godot 4.x)
 
-Date: 2026-04-01
-Project: `war-of-agents`
-Status: Approved for spec writing, pending final written-spec review
+Date: 2026-04-01 (initial), revised 2026-04-23 for Godot migration
+Project: `war-of-agents` → `War Buddy` (Godot 4.6.x)
+Status: Approved. Implementation is the Godot path under `godot/`.
 
 ## 1. Goal
 
-Validate a minimum playable RTS/PVP commander prototype inside the 团结中国 hub1.8.4 scene.
+Validate a minimum playable RTS/PVP commander prototype inside a Godot 4.x graybox scene (`godot/scenes/main.tscn` → `world.tscn`).
 
 This MVP is not a full RTS and not a full AI-agent gameplay loop. It is a validation slice for the core product idea:
 
@@ -29,7 +29,7 @@ We explicitly do **not** validate:
 ### 2.1 Core Experience
 
 The MVP succeeds if a player can:
-1. enter the hub1.8.4 verification scene
+1. launch the Godot project and enter the graybox battlefield (`main.tscn`)
 2. directly control a hero unit, with mouse as the default input
 3. move, target, and attack enemy buildings
 4. send a text command to either:
@@ -45,7 +45,7 @@ This is a **two-faction fake PVP skeleton**, not real networked PVP.
 
 Included:
 - player faction and enemy faction exist in-scene
-- enemy buildings are pre-placed in the scene and can be destroyed
+- enemy buildings are pre-placed in `world.tscn` and can be destroyed
 - the match has a clear win condition
 
 Excluded:
@@ -100,47 +100,48 @@ The MVP must support:
 - **text command input** as a functional path
 - **voice command entry** as a visible placeholder path
 
-Voice is not implemented yet, but the UI must clearly indicate where it belongs in the future experience.
+Voice is not implemented yet, but the HUD must clearly indicate where it belongs in the future experience.
 
 ## 4. System Design
 
-The implementation should be split into five focused modules.
+The implementation is split into five focused Godot modules, each one a single `.gd` script (plus its scene where applicable) under `godot/`.
 
-### 4.1 Hero Control Module
+### 4.1 Hero Control Module (`scripts/hero_controller.gd` + `scenes/commander_hero.tscn`)
 
 Responsibilities:
-- receive default mouse input
+- receive default mouse input (raycast from `RtsCamera`)
 - support hybrid-control extensibility
-- move the hero
-- select targets
+- move the hero (`CharacterBody3D`)
+- select targets via `target_selected` signal
 - perform basic attack / interaction actions
-- expose current hero state to the UI and match systems
+- expose current hero state to the HUD and match systems
 
 Non-responsibilities:
 - parsing deputy commands
 - match victory rules
 - AI execution logic
 
-### 4.2 Command Console Module
+### 4.2 Command Console Module (`scripts/command_log_model.gd` + HUD bindings in `hud_root.gd`)
 
 Responsibilities:
 - provide explicit channels for combat and economy deputies
 - accept text command input
 - log command metadata
-- maintain command lifecycle states
+- maintain command lifecycle states (timed progression, not instant)
 - expose recent command history to the HUD
 - expose a voice-entry placeholder state
+- emit `command_added` / `command_status_changed` signals
 
 Minimum command states:
 - submitted
 - received
 - pending execution
 
-Minimum command object fields:
+Minimum command object fields (Dictionary entries):
 - `id`
 - `channel`
 - `text`
-- `createdAt`
+- `created_at`
 - `status`
 
 Non-responsibilities:
@@ -148,54 +149,53 @@ Non-responsibilities:
 - deputy execution
 - multi-agent orchestration
 
-### 4.3 Match State Module
+### 4.3 Match State Module (`scripts/match_state.gd`)
 
 Responsibilities:
-- define factions
 - register enemy buildings
-- track building destruction
+- track building destruction (one-shot per id)
 - determine when all enemy buildings are destroyed
-- trigger victory
+- trigger victory via `victory_triggered` signal
 - lock match-end state when needed
 
-Minimum building object fields:
+Minimum building state fields:
 - `id`
 - `faction`
 - `hp`
-- `isDestroyed`
+- `is_destroyed`
 
 Minimum match-state fields:
-- `enemyBuildingsRemaining`
-- `isVictory`
-- `isMatchLocked`
+- `enemy_buildings_remaining`
+- `is_victory`
+- `is_match_locked`
 
 Non-responsibilities:
 - networking
 - enemy AI
 - real economy simulation
 
-### 4.4 Scene Adapter Module
+### 4.4 Scene Bootstrap Module (`scripts/bootstrap.gd`, attached to `scenes/main.tscn`)
 
 Responsibilities:
-- connect the MVP systems into the 团结中国 hub1.8.4 scene
-- bind the hero instance
-- bind enemy building targets
-- bind HUD anchors and command UI anchors
-- keep scene modifications localized and reversible
+- wire the MVP systems together on scene load
+- instance and bind the hero
+- register enemy buildings from `world.tscn`
+- connect HUD anchors and command UI anchors
+- validate required references and fail loudly on missing bindings
 
 Non-responsibilities:
 - redesigning the entire scene
 - introducing unrelated scene refactors
 
-### 4.5 MVP HUD / UI Layer
+### 4.5 MVP HUD / UI Layer (`scripts/hud_root.gd` + `scripts/hero_state.gd`)
 
 Responsibilities:
-- show minimum hero status
+- show minimum hero status (HP, target, action) via `hero_state.gd`
 - show deputy command channels
-- provide text input UI
-- provide voice-entry placeholder UI
-- show command log and command state
-- show victory prompt
+- provide text `LineEdit`/`Button` command submission
+- provide voice-entry placeholder button
+- show command log and command status
+- show victory overlay and lock input after victory
 
 Non-responsibilities:
 - final art polish
@@ -213,7 +213,7 @@ Must include:
 - hero can move
 - hero can acquire a target
 - hero can attack enemy buildings
-- hero state has minimum visual or UI feedback
+- hero state has minimum HUD feedback
 
 ### 5.2 Command System
 
@@ -222,30 +222,30 @@ Must include:
 - player can enter a text command
 - player can submit a command to a selected channel
 - command appears in command history
-- command status is visible
+- command status is visible and advances over time
 
 ### 5.3 Voice Placeholder
 
 Must include:
 - visible voice button / entry affordance
 - clear non-deceptive placeholder message, such as:
-  - “Voice command coming soon”
-  - or “Current MVP supports text commands only”
+  - "Voice command coming soon"
+  - or "Current MVP supports text commands only"
 
 ### 5.4 Fake PVP Battlefield
 
 Must include:
-- enemy buildings exist in the scene
-- enemy buildings can take damage
-- enemy buildings can be destroyed
+- enemy buildings exist in `world.tscn`
+- enemy buildings take damage (`hp_changed` signal)
+- enemy buildings can be destroyed (`destroyed` signal)
 - match state updates when buildings are destroyed
 - victory triggers when all enemy buildings are gone
 
 ### 5.5 Victory Feedback
 
 Must include:
-- clear victory message or panel
-- post-victory state lock for core match actions
+- clear victory overlay on the HUD
+- post-victory state lock for hero input
 
 ## 6. Explicitly Out of Scope
 
@@ -262,6 +262,7 @@ The following are intentionally excluded from this MVP:
 - voice recognition
 - TTS or spoken deputy responses
 - full HUD production-grade presentation
+- NavigationAgent3D pathfinding (currently direct-move raycast)
 
 ## 7. Error Handling and Edge Cases
 
@@ -272,11 +273,13 @@ Handle:
 - clicking invalid targets
 - control input after victory
 - missing hero binding on scene load
+- clicks over HUD elements (must not leak into world orders)
 
 Expected behavior:
 - invalid or unreachable actions fail safely with light feedback
 - post-victory control is locked or suppressed
-- missing binding fails early and visibly during initialization
+- missing binding fails early and visibly during bootstrap
+- HUD consumes input before raycast is issued
 
 ### 7.2 Command Console
 
@@ -290,7 +293,7 @@ Handle:
 Expected behavior:
 - empty command cannot be submitted
 - channel selection is explicit (preferred) or has a deterministic default
-- command history is driven from one authoritative data source
+- command history is driven from one authoritative model (`CommandLogModel`)
 - submissions remain ordered and visible
 
 ### 7.3 Voice Placeholder
@@ -301,32 +304,38 @@ Handle:
 Expected behavior:
 - clear placeholder messaging
 - no fake recording flow
-- no misleading “active” interaction state
+- no misleading "active" interaction state
 
 ### 7.4 Victory Logic
 
 Handle:
 - last building destroyed but victory not triggered
 - destroyed building still counted as alive
-- enemy building missing faction registration
+- enemy building missing registration in `MatchState`
 - multiple victory triggers firing
 
 Expected behavior:
-- one authoritative destruction update path
+- one authoritative destruction path (`EnemyBuilding.destroyed` → `MatchState.mark_destroyed`)
 - one authoritative building registry
 - one-shot victory trigger lock
 - initialization checks for enemy-building registration problems
 
 ## 8. Testing Strategy
 
-### 8.1 Initialization Tests
+### 8.1 Initialization (boot) checks
 
 Verify on scene load:
-- hero object exists and is bound
+- hero node exists and is bound
 - HUD appears
 - deputy command UI appears
 - enemy buildings are registered
 - victory monitor is active
+
+Headless boot:
+```bash
+godot4 --headless --path godot --quit
+```
+must exit with no missing-script or missing-node errors.
 
 ### 8.2 Interaction Tests
 
@@ -336,28 +345,26 @@ Verify during play:
 - text command submission works for both channels
 - command log updates correctly
 - voice placeholder button shows correct placeholder state
+- HUD clicks do not issue world orders
 
 ### 8.3 Match Closure Tests
 
 Verify the minimum loop:
-- enemy buildings update state when damaged / destroyed
+- enemy buildings update HP/state when damaged / destroyed
 - destroying the final building triggers victory
-- victory UI appears
+- victory overlay appears
 - post-victory input enters a controlled locked state
 
 ### 8.4 Recommended Test Order
 
-Recommended validation order:
 1. initialization
 2. hero control
 3. command input
 4. building destruction and victory
 
-This reduces debugging ambiguity and keeps the minimum loop testable.
-
 ## 9. Logging and Debug Visibility
 
-Minimum debug events recommended for MVP:
+Minimum debug events recommended for MVP (printed via `print()` or `push_warning()`):
 - hero input event
 - command submitted
 - command status updated
@@ -365,13 +372,11 @@ Minimum debug events recommended for MVP:
 - victory triggered
 - scene binding success / failure
 
-The goal is not full telemetry. The goal is enough observability to debug the future AI-integration path.
-
 ## 10. Acceptance Criteria
 
-The MVP is accepted when the following full flow works in the hub1.8.4 scene:
+The MVP is accepted when the following full flow works in `main.tscn`:
 
-1. the scene loads correctly
+1. the scene loads correctly in Godot 4.6.x
 2. the player sees the hero and minimal HUD
 3. the player can control the hero with mouse-first interaction
 4. the player can send a text command to either deputy channel
@@ -382,12 +387,10 @@ The MVP is accepted when the following full flow works in the hub1.8.4 scene:
 
 ## 11. Follow-On Work After MVP
 
-After this MVP, the most natural next steps are:
-1. connect Command Console to real AI-agent input processing
-2. add execution stubs for combat deputy behavior
-3. add execution stubs for economy deputy behavior
-4. only then evaluate whether real networking is worth adding
+1. replace direct raycast movement with `NavigationAgent3D`
+2. connect Command Console to real AI-agent input processing
+3. add execution stubs for combat deputy behavior
+4. add execution stubs for economy deputy behavior
+5. only then evaluate whether real networking is worth adding
 
 **Priority rule:** integrate AI-facing command behavior before introducing networking complexity.
-
-That preserves the product’s unique value instead of turning the project into a generic multiplayer prototype.
