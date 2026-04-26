@@ -28,11 +28,20 @@ The player commands the rest of their faction through two AI deputies — a comb
 
 Implication: command latency, cost, and unpredictability of LLM inference are first-class system constraints. The architecture must absorb them, not pretend they don't exist.
 
-### 2.3 AI Deputies are Characters, Not Tools
+### 2.3 Agency is a Gradient: Hero → Deputy → Captain → Regular
 
-Players are meant to form an emotional bond with their AI deputies across matches. Deputies have persistent identity, personality, memory of past matches with this player, evolving competence, and reactions to success and failure.
+The faction is not "player + AI tool". It is a four-tier ladder of agency, with player emotional investment scaling alongside it:
 
-Implication: doc 08 is half systems engineering, half character design. A deputy that forgets you between matches breaks the pillar; a deputy that has no failure modes also breaks the pillar.
+| Tier | Agency | Player relationship | Death treatment |
+|---|---|---|---|
+| **Hero** | Player-controlled directly | Player avatar | Ragdoll corpse + floating soul |
+| **Deputy** (副官) | Top-tier LLM agent, embodied on the field as a unit | Long-term bond, full cross-match memory | Ragdoll corpse + floating soul |
+| **Captain** (小队长) | Smaller LLM agent, embodied unit | Short-to-medium bond; memory depth tuned by testing (TBD doc 08) | Ragdoll corpse + floating soul |
+| **Regular unit** | Behavior-tree script, no agency | Disposable | Ragdoll corpse only |
+
+A deputy that forgets the player between matches breaks the pillar. A deputy that never fails also breaks the pillar. Captains are a *new* deliberate design: they extend the bond surface area beyond the single deputy, while their lighter agent footprint keeps the system affordable.
+
+Implication: doc 08 covers the **whole agent ladder**, not just the deputy. Doc 09 must carry an `agency_tier` field on every unit definition. Doc 11 uses agency tier to gate visual feedback like the soul effect.
 
 ### 2.4 Three-Tier Command System
 
@@ -48,7 +57,9 @@ The three tiers share **one tactical-order schema** as their common substrate. P
 
 ### 2.5 Hybrid Deputy Modes: AI Primary, Human Archon Secondary
 
-The default and headline mode is two AI deputies. As a supplementary mode, a human player may take over a deputy seat in a Starcraft-2-Archon-style configuration — sharing one faction's controls with the commander. Human-deputy mode is a feature, not a fallback for broken AI.
+A faction has **one** deputy seat — a single commander-level officer. The default and headline filler is an AI deputy. As a supplementary mode, a human player may take the seat in a Starcraft-2-Archon-style configuration — sharing one faction's controls with the commander. Human-deputy mode is a feature, not a fallback for broken AI.
+
+Captains (see 2.3) are a separate, lower tier and are not the same kind of seat — they spawn during a match as part of the army, not as a pre-match commander-level role.
 
 Implication: the command bus must accept input from both AI handlers and human controls without branching the rest of the game logic.
 
@@ -84,20 +95,23 @@ What is fixed at the vision level: *whatever a match looks like, the commander a
 
 ### In scope for the full game (covered across 07–12, built incrementally)
 
-- One commander + one hero + two deputy seats (AI or human)
+- One commander + one hero + one deputy seat (AI or human)
+- Captains as smaller in-match LLM agents the player can bond with
+- Approximate force size: ~50 units per faction (1 hero + 1 deputy + N captains + regulars)
 - Voice as primary command channel
 - Three-tier command system with shared tactical schema
-- Persistent AI deputy identity across matches
+- Persistent AI deputy identity across matches; captain memory depth tuned by testing
 - War-room pre-match planning UI with pre-plan editor
 - Player-defined named regions (advanced)
-- Economy and combat units sufficient to give deputies meaningful autonomous work
+- Economy and combat units sufficient to give deputies and captains meaningful autonomous work
 
 ### Explicitly out of scope (DNA-violating, do not propose without re-opening 06)
 
 - Player-side multi-select, drag-box selection, control groups
 - Direct production queue management by the player
 - Commander framing/micro-ing arbitrary units (only the hero is directly controlled)
-- AI deputies without persistent identity ("forget the player every match")
+- AI deputy without persistent identity ("forgets the player every match")
+- Collapsing the agent ladder back to a single tier (deputy = captain = regular)
 - Replacing voice with hotkey-driven command shells in the shipped product
 - Mocked/scripted deputies sold as AI in shipped builds (MVP-only allowance)
 
@@ -116,7 +130,7 @@ This document parents the following. Numbering continues from 01–05.
 | 06 | Full-Gameplay Vision and Core Loop | — | This doc. |
 | 07 | Command System Specification | 06 | Three-tier data structures; **shared tactical-order schema is the keystone artifact**; spatial vocabulary schema; pre-plan resource format; command lifecycle. |
 | 08 | AI Deputy Architecture | 06, 07 | Two halves: (a) layered execution — LLM planner / intent classifier / behavior tree, tool-calling contract, battlefield snapshot format; (b) deputy-as-character — personality framework, cross-match memory model, growth, bond system, failure reactions. |
-| 09 | Entities, Combat, and Economy Rules | 06, 07 | Unit / building taxonomies, resource types, gather-and-produce loops, combat math (HP / DPS / armor / range), vision and fog. **Skeleton first (categories + field definitions), numbers iterated later.** |
+| 09 | Entities, Combat, and Economy Rules | 06, 07 | Unit / building taxonomies (every unit carries an `agency_tier` field: hero / deputy / captain / regular), resource types, gather-and-produce loops, combat math (HP / DPS / armor / range), vision and fog. **Skeleton first (categories + field definitions), numbers iterated later.** |
 | 10 | War-Room UI and Pre-plan System | 07 | Main-menu flow, pre-plan editor UX, player-region authoring tool, per-map storage format. |
 | 11 | MVP Physics and Interaction Feel | — (parallel to 06) | Near-term, scoped to current Godot MVP graybox. Collision-layer table, hero movement feel, attack feedback, click feedback, navigation edge cases. Each spec line quantified with numbers + subjective intent. |
 | 12 | Test and Replay Strategy | 07, 08, 09 | Cross-cutting: GUT unit tests for behavior trees, fixture-based intent-classifier tests, command-replay format, LLM behavior benchmarks. |
@@ -135,7 +149,8 @@ The following are deliberately not answered in 06 and will be resolved in the na
 
 - **What is the tactical-order schema, concretely?** → 07
 - **What does the LLM planner's tool-calling contract look like?** → 08
-- **How do deputies remember the player across matches, and what do they remember?** → 08
+- **How does the deputy remember the player across matches, and what does it remember?** → 08
+- **What is a captain's memory depth, and does it persist across matches or only within one?** → 08 (tuned by testing)
 - **What units, buildings, resources exist in v1?** → 09
 - **What is a match's win condition and length?** → 09
 - **How is the war-room pre-plan editor structured?** → 10
