@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3 uid="uid://squadunit"]
+
+[ext_resource type="Script" path="res://scripts/squads/squad_unit.gd" id="1_squad"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+height = 1.4
+radius = 0.4
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.3, 0.5, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ring"]
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="SquadUnit" type="CharacterBody3D"]
+script = ExtResource("1_squad")
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_body")
+material_override = SubResource("StandardMaterial3D_body")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.4
+target_desired_distance = 0.3
+radius = 0.5
+height = 1.5
+avoidance_enabled = true
+
+[node name="SelectionRing" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.65, 0)
+size = Vector3(1.6, 1, 1.6)
+texture_albedo = SubResource("GradientTexture2D_ring")
+modulate = Color(0.6, 0.9, 1, 1)
+visible = false
