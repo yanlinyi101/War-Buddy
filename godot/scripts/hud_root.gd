@@ -14,6 +14,7 @@ signal voice_placeholder_clicked
 @onready var voice_status_label: Label = %VoiceStatusLabel
 @onready var victory_overlay: Control = %VictoryOverlay
 @onready var help_label: Label = %HelpLabel
+@onready var dev_mode_label: Label = %DevModeLabel
 
 func _ready() -> void:
 	channel_selector.clear()
@@ -25,6 +26,10 @@ func _ready() -> void:
 	%SubmitButton.pressed.connect(_on_submit_pressed)
 	%VoiceButton.pressed.connect(_on_voice_pressed)
 	command_input.text_submitted.connect(_on_text_submitted)
+
+func show_dev_label() -> void:
+	if dev_mode_label != null:
+		dev_mode_label.visible = true
 
 func bind_hero_state(hero_state) -> void:
 	hero_state.health_changed.connect(_on_hero_health_changed)

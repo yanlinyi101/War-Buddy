@@ -109,6 +109,20 @@ size_flags_vertical = 3
 text = "No commands yet."
 fit_content = true
 
+[node name="DevModeLabel" type="Label" parent="HudRoot" unique_id=782341900]
+unique_name_in_owner = true
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 40.0
+text = "DEV MODE"
+horizontal_alignment = 2
+modulate = Color(1, 0.6, 0.2, 1)
+mouse_filter = 2
+
 [node name="VictoryOverlay" type="ColorRect" parent="HudRoot" unique_id=2110181169]
 unique_name_in_owner = true
 visible = false
