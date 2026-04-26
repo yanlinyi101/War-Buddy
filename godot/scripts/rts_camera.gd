@@ -4,8 +4,8 @@ class_name RtsCamera
 @export var pan_speed := 18.0
 @export var edge_pan_margin := 18.0
 @export var zoom_step := 2.5
-@export var min_height := 10.0
-@export var max_height := 30.0
+@export var min_ortho_size := 8.0
+@export var max_ortho_size := 36.0
 @export var drag_pan_speed := 0.04
 @export var bounds_min := Vector2(-18.0, -18.0)
 @export var bounds_max := Vector2(18.0, 18.0)
@@ -52,8 +52,11 @@ func _process(delta: float) -> void:
 		_clamp_to_bounds()
 
 func _adjust_zoom(amount: float) -> void:
-	position.y = clampf(position.y + amount, min_height, max_height)
-	_clamp_to_bounds()
+	if projection == PROJECTION_ORTHOGONAL:
+		size = clampf(size + amount, min_ortho_size, max_ortho_size)
+	else:
+		position.y = clampf(position.y + amount, min_ortho_size, max_ortho_size)
+		_clamp_to_bounds()
 
 func _clamp_to_bounds() -> void:
 	position.x = clampf(position.x, bounds_min.x, bounds_max.x)

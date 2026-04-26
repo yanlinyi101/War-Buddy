@@ -2,6 +2,15 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.1.1] — 2026-04-26
+
+### Fixed
+- HUD `PanelContainer` no longer covers the 3D viewport or swallows mouse clicks. Added `mouse_filter = 2` and removed `size_flags_vertical = 3` so the panel sizes to its content instead of expanding across the screen. World orders now reach the ground / enemy buildings under the command-panel area as intended.
+- Mouse-wheel zoom on the orthographic RTS camera now actually zooms by adjusting `Camera3D.size`. Previous code modified `position.y`, which only translates an oblique orthographic view diagonally — looked like a pan, not a zoom. `_adjust_zoom` now branches on `projection`; perspective fallback retained for future use.
+
+### Docs
+- Synced `docs/specs/02-rts-mvp-implementation-plan.md` checkboxes (T3–T6) with the v0.1.0 reality and the v0.1.1 patch.
+
 ## [v0.1.0] — 2026-04-23
 
 First public cut of the RTS MVP commander slice, fully ported to Godot 4.6.x.

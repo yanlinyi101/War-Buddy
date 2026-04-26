@@ -91,3 +91,5 @@ Manual acceptance: run through every item in `05-godot-smoke-test-checklist.md` 
 The documented Unity RTS MVP commander loop is fully represented in the Godot path: direct hero control, deputy command UI, fake-PVP building destruction, and victory closure all exist in Godot 4.6.x with usability gaps from the first port cleaned up.
 
 If the next milestone targets parity with the **full legacy Unity RTS sandbox** rather than the approved MVP slice, the next major chunk is economy / production / building systems. That is a materially bigger piece of work, not a minor follow-up.
+
+**Post-v0.1.1 milestone lock**: v0.2 is committed to the multi-unit selection + Squad abstraction path (C). Hero remains a standalone `CharacterBody3D` directly driven by `hero_controller.gd`; Squad is a new AI-unit collection that coexists with — but does not absorb — the hero. Deputy real execution (D) and the economy/production sandbox (E) follow in v0.3 and v0.4 respectively.
