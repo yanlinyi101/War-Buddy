@@ -56,3 +56,19 @@
 - [x] No `unity/` tree remains in this repo (migration complete)
 - [x] `godot/README.md` states Godot is the primary implementation path
 - [x] `docs/specs/` refers to Godot nodes / scripts / signals, not legacy Unity engine concepts
+
+## Squad puppets (debug build only)
+
+Run from a debug build (editor F5, or `godot --path godot`).
+
+- [ ] HUD shows orange "DEV MODE" label in the top-right
+- [ ] Three blue capsules are present around the hero sphere
+- [ ] Drag a left-click box around all three capsules — each gets a faint ring beneath it
+- [ ] Right-click on `EnemyBuildingA` while units are selected — all three units walk to it
+- [ ] All three units attack the building together; HP drops faster than the hero alone
+- [ ] When the building is destroyed, the units stop and rings remain visible
+- [ ] Press ESC — rings disappear; selection set is empty
+- [ ] Click without dragging — hero left-click move still works (event fell through)
+- [ ] Right-click on empty ground without a selection — hero target clears (event fell through)
+- [ ] Squad units never lose HP, never die, and have no HP label
+- [ ] In a release build (`--export-release`), the DEV MODE label is absent and drag-box / right-click does nothing to squads

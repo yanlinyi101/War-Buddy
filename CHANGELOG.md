@@ -2,6 +2,20 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.2.0] — 2026-04-26
+
+### Added
+- **SquadUnit puppets** — three blue capsule units spawn near the hero. They expose a method-level order interface (`order_move / order_attack / stop`) but do nothing on their own. Combat parameters mirror the hero (20 dmg, 0.75 s cooldown, 2.8 unit range). They have no HP and cannot die — invincible by design until the deputy AI lands.
+- **SelectionSet** — `RefCounted` container of currently-selected squad units, with selection-ring visual feedback via `Decal`.
+- **DevSquadController** (debug builds only) — drag-box left-click selection plus right-click move / attack orders. Provides the validation harness for the squad order interface ahead of Phase D's deputy execution. `OS.is_debug_build()` gates registration so release builds carry no dev surface.
+- **HUD `DEV MODE` indicator** — orange top-right label visible only when the dev controller is active.
+- **Tests** — five new GUT cases for SelectionSet plus four for SquadUnit (order interface, attack target lifecycle, selection-ring toggle). Total green count: 19.
+
+### Notes
+- No new autoloads. SelectionSet is held by reference from `bootstrap.gd`; `EventBus` / `CommandBus` / `GameState` remain deferred to Phase D when the deputy makes them necessary.
+- The `Squad` named-group abstraction (spec 03 §7) is intentionally **not** yet introduced; v0.2 has only flat `SquadUnit` instances.
+- Hero controls unchanged from v0.1.1. The LoL/WASD dual-input rework is captured in `docs/future-features.md`.
+
 ## [v0.1.1] — 2026-04-26
 
 ### Fixed
