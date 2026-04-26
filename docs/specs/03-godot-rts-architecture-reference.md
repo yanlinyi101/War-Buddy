@@ -1,6 +1,8 @@
 # Godot AI Agent RTS 游戏架构（底座优先）
 
 > Source: architecture brief originally authored against a Unity target (2026-02-28), migrated to Godot 4.x on 2026-04-23. The gameplay architecture is engine-agnostic; only the concrete node/signal mappings changed.
+>
+> **Status (2026-04-26):** This document is **MVP-scoped** and partially superseded by the post-MVP vision in `06-full-gameplay-vision.md`. The `Order` / `CommandBus` / `EconAgent` / `SquadAgent` sketches here remain the engine-level pattern Phase D's MVP scaffolding will follow, but the real long-term contracts will be defined in **doc 07 (Command System Specification)** — including the three-tier shared tactical-order schema — and **doc 08 (AI Deputy Architecture)** — including LLM tool-calling, character persistence, and voice. Treat this 03 doc as the bridge between today's code and those upcoming specs.
 
 目标：在 Godot 4.6.x 上搭出稳定的 RTS 游戏底座（MVP 期允许人类简单操作所有单位），并在底座内预留标准化接口，支持后续接入 AI Agent（经济副官 / 战斗小队长）。当 AI 可靠后，通过"控制策略"收口玩家权限，仅允许直控单个英雄单位，其余单位由 AI 通过同一套指令系统驱动。
 

@@ -1,6 +1,7 @@
-# 06 — Phase C Design: Squad Puppets + Dev Validation Mode
+# MVP Phase C Design — Squad Puppets + Dev Validation Mode
 
-**Status:** design approved 2026-04-26, awaiting implementation plan.
+**Status:** design approved 2026-04-26; implementation shipped as v0.2.0 (commits `480356c…b358a8e`). Retained as the historical record of the v0.2 MVP scaffolding.
+**Vision alignment:** This is **MVP scaffolding**, not part of the post-MVP doc series 06–12. The full-gameplay vision (`06-full-gameplay-vision.md`) is the post-MVP north star; the SquadUnit puppet built here will eventually be driven by the tactical-order schema from doc 07 (Command System) and the deputy from doc 08 (AI Deputy Architecture). The drag-box / multi-select dev tool is debug-only and does **not** violate vision §6's "player-side multi-select is out of scope" — it is never exposed in shipped builds (`OS.is_debug_build()` gate).
 **Engine:** Godot 4.6.x. GDScript only.
 **Milestone:** v0.2.
 
@@ -253,4 +254,4 @@ Modified:
 - `godot/scenes/main.tscn` (add the dev label Control inside HudRoot, hidden by default)
 - `docs/specs/05-godot-smoke-test-checklist.md` (add "Squad puppets (debug build)" section)
 - `CHANGELOG.md` (v0.2.0 entry)
-- `docs/specs/02-rts-mvp-implementation-plan.md` or new `07-phase-c-implementation-plan.md` (the executable plan, written in the next step via writing-plans skill)
+- `docs/specs/mvp-phase-c-implementation-plan.md` (the executable plan)

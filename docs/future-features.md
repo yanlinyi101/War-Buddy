@@ -2,6 +2,8 @@
 
 Catch-all for features that came up in design conversations but were intentionally deferred. Each item should describe the trigger that brought it up, what it would do, and any constraints noted at the time of deferral.
 
+> **Vision alignment (2026-04-26):** Hero-feel items below ("WASD Arena", LoL classic dual-input) belong to **doc 11 — MVP Physics and Interaction Feel** per `docs/specs/06-full-gameplay-vision.md` §7. When doc 11 is brainstormed, these notes feed into it; this file remains as a free-form scratchpad for ideas not yet placed in the 06–12 series.
+
 ---
 
 ## Hero "WASD Arena" + LoL classic dual-input mode
