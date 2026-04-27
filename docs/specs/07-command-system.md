@@ -74,7 +74,7 @@ single Deputy seat. The Deputy decomposes complex plans by re-emitting `submit_p
 calls with `issuer = DEPUTY` and the target captain's `target_squad_id` (each captain
 leads exactly one squad). Captains in turn issue `submit_orders` (not plans) to their
 own squad units with `issuer = CAPTAIN`. The bus does not police this hierarchy —
-that is `ControlPolicy`'s job (§8) — but the canonical flow is:
+that is `ControlPolicy`'s job (§9) — but the canonical flow is:
 
 ```
 Player utterance ──► ClassifierRouter ──► submit_plan (issuer=PLAYER, deputy="deputy")
@@ -94,7 +94,7 @@ extends Resource
 
 # --- Identity & classification ---
 @export var id: StringName                # unique (UUID-ish), assigned at construction
-@export var type_id: StringName = &""     # registered key, e.g. &"move", &"attack"; see §6
+@export var type_id: StringName = &""     # registered key, e.g. &"move", &"attack"; see §7
 @export var origin: Origin                # which vision §2.4 lane authored this
 @export var issuer: Issuer                # who reasoned about it
 @export var deputy: StringName = &""      # which deputy executes; "" = hero or scripted
@@ -102,33 +102,101 @@ extends Resource
 enum Origin { PRE_PLAN, TACTICAL_VOICE, STRATEGIC_DECOMPOSITION, SCRIPT, HERO_DIRECT }
 enum Issuer { PLAYER, DEPUTY, CAPTAIN, SCRIPT }
 
-# --- Targeting (vision §4 spatial vocabulary minus player-named regions) ---
+# --- Targeting (vision §4 spatial vocabulary) ---
+# Tagged-union semantics layered over parallel fields. `target_kind` is the
+# canonical discriminator; the matching parallel field carries the value.
+@export var target_kind: StringName = &""              # see §3.3 kinds table
 @export var target_unit_ids: Array[int] = []
 @export var target_squad_id: StringName = &""
 @export var target_grid: Vector2i = Vector2i(-1, -1)   # (-1,-1) = unset
 @export var target_landmark: StringName = &""
 @export var target_position: Vector3 = Vector3.ZERO    # zero vector treated as unset
-# Resolution priority (highest first):
+@export var target_unit_ref: String = ""               # namespaced ref, e.g. "captain:alpha"
+@export var target_param: StringName = &""             # pre-plan placeholder, see §8.4
+@export var target_ambiguous_candidates: Array[String] = []   # for kind="ambiguous"
+# Fallback resolution when target_kind is unset (legacy):
 #   target_position > target_landmark > target_grid > target_squad_id > target_unit_ids
-# v1 omits target_region (player-named); reintroduce when doc 10's war-room UI ships.
 
 # --- Type-specific bag ---
 @export var params: Dictionary = {}        # per-type schema documented in OrderTypeRegistry
 
+# --- Engagement modifier (SC2-style stance triad, see §3.5) ---
+@export var posture: StringName = &"aggressive"   # aggressive | stand_ground | hold_fire
+
 # --- Queue & lifecycle ---
-@export var priority: int = 0
+@export var priority: int = 0              # use PRIORITY_ROUTINE/HIGH/EMERGENCY constants, see §3.7
 @export var queue_mode: StringName = &"replace"   # replace | append | insert
 @export var timestamp_ms: int = 0
-@export var expires_at_ms: int = 0          # 0 = never
+@export var expires_at_ms: int = 0          # 0 = never (per vision §2.4 duration semantics)
 
 # --- AI provenance ---
 @export var rationale: String = ""          # micro-rationale; HUD bubbles use plan.rationale primarily
 @export var confidence: float = 1.0         # 1.0 = pre-plan/script; <1.0 = LLM-derived
 @export var parent_intent_id: StringName = &""  # ActionPlan.id if this came from a plan; "" otherwise
 
-# --- Mutable status (executor writes only) ---
-@export var status: StringName = &"pending"  # pending | executing | completed | failed | canceled
+# --- Mutable status (executor writes only; see §4 lifecycle) ---
+@export var status: StringName = &"pending"
+# Canonical values (8-state lifecycle, linear, no rollback):
+#   pending → classifying → dispatched → executing →
+#       { completed | failed | canceled | expired }
 ```
+
+### 3.3 `target_kind` discriminator (tagged-union semantics)
+
+The spatial-vocabulary brainstorm landed on a tagged-union shape (`{kind, value}`) for clarity in LLM tool-call output and for the `ambiguous` case the parallel-fields encoding cannot represent. Implementation keeps the parallel `target_*` fields for backward compatibility and adds `target_kind` as the canonical discriminator.
+
+| `target_kind` | Carrier field | Notes |
+|---|---|---|
+| `""` (empty) | (legacy fallback chain) | Fallback resolution priority position > landmark > grid > squad > units |
+| `position` | `target_position` | World-space coordinate |
+| `landmark` | `target_landmark` | Designer-named landmark (resolves via 09 OrderResolver) |
+| `grid` | `target_grid` | A1–H8 cell as Vector2i |
+| `squad` | `target_squad_id` | Whole squad |
+| `units` | `target_unit_ids` | Numeric ids; fast-path for executor |
+| `unit_ref` | `target_unit_ref` | Namespaced string, e.g. `captain:alpha`, `enemy_structure:hq_1` |
+| `ambiguous` | `target_ambiguous_candidates` | Multiple landmark/region candidates; deputy autonomy (§7 / 08 §11.8) decides resolution |
+| `self` | (none) | The deputy itself ("focus on yourself") |
+| `hero` | (none) | The commander's hero unit |
+| `param` | `target_param` | Pre-plan parametric placeholder, see §8.4 |
+
+### 3.4 `target_unit_ref` namespace
+
+The namespaced string form is preferred for any LLM-emitted reference to a named entity (because the LLM emits text, not numeric ids). Resolver (09) maps to the runtime `target_unit_ids` at execution time.
+
+```
+captain:<id>             # named friendly captain
+enemy_unit:<id>          # named/identified enemy unit
+enemy_structure:<id>     # enemy building
+friendly_structure:<id>  # friendly building
+```
+
+Anonymous regulars are addressed via `squad`, `grid`, or `landmark`, never directly by `unit_ref`.
+
+### 3.5 `posture` — SC2-style stance triad
+
+Three values, copied from Starcraft 2:
+
+- `aggressive` — pursue and engage enemies in range
+- `stand_ground` — hold position, return fire only, do not chase
+- `hold_fire` — do not engage even if attacked
+
+Posture modifies engagement rules during execution of any verb. It is orthogonal to `type_id`: a `defend B4 + aggressive` and a `defend B4 + stand_ground` are both valid and meaningfully different. Default `aggressive`.
+
+### 3.6 `priority` — three semantic anchors
+
+`priority: int` stays open-integer for future growth, but the canonical values to use:
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `PRIORITY_ROUTINE` | 0 | Default. Same-priority on same captain replaces existing (existing → `canceled`). |
+| `PRIORITY_HIGH` | 10 | Interrupts any `routine` command immediately. |
+| `PRIORITY_EMERGENCY` | 20 | Interrupts both `routine` and `high`; deputy may reallocate across captains to comply. |
+
+Sub-commands generated by deputy decomposition inherit parent priority unless explicitly overridden.
+
+### 3.7 `parent_intent_id` and command tree
+
+When the strategic LLM decomposes intent into multiple sub-orders, all share the parent `ActionPlan.id`. Deputy → captain fan-out also uses `parent_intent_id`. Replay, HUD aggregation ("3 of 5 sub-commands complete"), and post-match analysis all key off this tree. The lifecycle state machine (§4) operates on individual orders; aggregate states for UI are derived.
 
 Methods on `TacticalOrder`:
 
@@ -140,7 +208,7 @@ func is_expired(now_ms: int) -> bool
 ```
 
 **Field-set rationale:**
-- `type_id` is a `StringName` not an `enum` — see §6. The MVP enum we built in Phase C
+- `type_id` is a `StringName` not an `enum` — see §7. The MVP enum we built in Phase C
   for `SquadUnit.order_*` is method-level direct dispatch and is *not* the same thing;
   `type_id` is the registry key.
 - `target_position` and `target_landmark` accept *either* — landmark is named-resolved
@@ -151,7 +219,40 @@ func is_expired(now_ms: int) -> bool
 - `status` is the only mutable field. The bus refuses to accept already-mutated
   Resources (incoming `status` must be `&"pending"`).
 
-## 4. `ActionPlan` Resource
+## 4. Lifecycle state machine
+
+Eight states, linear with terminal branching. No rollback — once a state advances it cannot revert. Re-dispatching to a different captain is modeled as `cancel + new submit` with `parent_intent_id` linking, not as a backward transition.
+
+```
+                                              ┌→ completed
+                                              │
+[pending] → [classifying] → [dispatched] → [executing] ┼→ failed
+                                              │
+                                              ├→ canceled
+                                              │
+                                              └→ expired
+```
+
+| State | Meaning |
+|---|---|
+| `pending` | Resource constructed, `id` assigned, awaiting validation/routing |
+| `classifying` | LLM call in flight (tactical or strategic). Pre-plan and script orders skip this. |
+| `dispatched` | Bus-validated, routed to deputy/captain, awaiting executor pickup |
+| `executing` | Behavior tree (09) is acting on it |
+| `completed` | Terminal: success |
+| `failed` | Terminal: unrecoverable error during execution |
+| `canceled` | Terminal: superseded by player or higher-priority command |
+| `expired` | Terminal: `expires_at_ms` elapsed; captain reverts to default behavior, no player notification |
+
+**Transition rules:**
+- Each transition emits `command_status_changed(order_id, new_state)` on `CommandBus`.
+- A `canceled` transition while still in `classifying` (e.g. player retracts before LLM finishes) is permitted; the LLM result is discarded on arrival.
+- Pre-plan orders go directly `pending → dispatched` (skip `classifying`).
+- Strategic orders may sit in `classifying` for several seconds during LLM decomposition.
+
+**Migration from MVP `CommandLogModel`:** the legacy three-state model (`submitted` / `received` / `pending_execution`) maps as `submitted→pending`, `received→dispatched`, `pending_execution→executing`. The new states (`classifying`, `completed`, `failed`, `canceled`, `expired`) are additive.
+
+## 5. `ActionPlan` Resource
 
 ```gdscript
 class_name ActionPlan
@@ -183,7 +284,7 @@ Constraints:
 - Deserialization sets these invariants automatically; constructors should fail
   loudly when LLM output violates them.
 
-## 5. `CommandBus` autoload
+## 6. `CommandBus` autoload
 
 ```gdscript
 class_name CommandBus
@@ -196,7 +297,7 @@ signal order_rejected(order: TacticalOrder, reason: StringName)
 # Ingress
 func submit_plan(plan: ActionPlan) -> Dictionary
     # returns { accepted: Array[TacticalOrder], rejected: Array[Dictionary] }
-    # Validates plan invariants (§4) then forwards to submit_orders.
+    # Validates plan invariants (§5) then forwards to submit_orders.
 
 func submit_orders(orders: Array[TacticalOrder]) -> Dictionary
     # for pre-plan, script, hero-direct, dev tools.
@@ -236,7 +337,7 @@ The bus does **not** own:
 First failure short-circuits with a stable reason `StringName` (e.g.
 `&"unknown_type_id"`, `&"control_policy_denied"`, `&"target_not_found"`).
 
-## 6. `OrderTypeRegistry` autoload
+## 7. `OrderTypeRegistry` autoload
 
 ```gdscript
 class_name OrderTypeRegistry
@@ -269,7 +370,7 @@ use_skill     params: {skill_id: StringName, ...}
 Doc 09 extends this with `gather`, `return_cargo`, `build`, `train`, `research`, etc.,
 without touching 07.
 
-## 7. Pre-plan format
+## 8. Pre-plan format
 
 ```gdscript
 class_name PrePlan
@@ -308,7 +409,35 @@ conditions: {
 Anything not in this list is ignored. Doc 10 (war-room UI) can extend the DSL with
 authoring guardrails.
 
-## 8. `ControlPolicy`
+### 8.4 Parametric placeholders
+
+Pre-plan orders may reference values resolved at trigger time rather than at authoring time. These let one plan be re-usable across different match starts (mirror map, randomized spawns, etc.). Placeholders are written as the plan order's `target_kind = &"param"` plus `target_param = &"<placeholder_name>"`.
+
+The four supported placeholders:
+
+| Placeholder | Resolves to |
+|---|---|
+| `<my_main_base>` | The main base structure of the player's faction at trigger time |
+| `<closest_enemy_base>` | Nearest known enemy base from the player's hero position |
+| `<hero_position>` | The current grid cell of the hero |
+| `<deputy_focus>` | The deputy's current attention focus (08 §7 specifies how this is computed) |
+
+These are the **only** placeholders allowed. No general expression language. If a pre-plan needs richer runtime logic, the player should author it as a strategic intent (LLM-driven) at authoring time instead of as a structured pre-plan.
+
+`PrePlanRunner` resolves placeholders to concrete `target_*` values immediately before calling `CommandBus.submit_orders`. The resolved orders carry the new values, not the placeholders, so the bus and downstream replay see deterministic targeting.
+
+### 8.5 Share codes (deferred implementation)
+
+Pre-plans are shareable via opaque alphanumeric codes. The share-code subsystem:
+
+- Encodes a `PrePlan` resource (and any required private regions) into a base32 / base58 string
+- Validates on import: schema version must match; bound map must be a known map; private regions are imported into the importing player's region set with conflict resolution (rename on collision)
+- Versioning: codes carry a schema version prefix so old codes can be rejected with a useful error rather than mis-interpreted
+- v1 ships only the validation hooks and a schema-version field on `PrePlan`; the encoder/decoder is a separate task
+
+The share-code feature is the social surface of the war-room — designed in 07 so the resource format doesn't have to be re-thought when it ships. Implementation is deferred; doc 10 (war-room UI) will surface the import/export UI when the encoder/decoder lands.
+
+## 9. `ControlPolicy`
 
 A small interface; default impl is `FullControl` (no restrictions):
 
@@ -336,7 +465,7 @@ v1 ships four policies:
 Vision §2.5 hints the player picks the policy via Settings; that's doc 10's HUD work.
 07 only owns the interface and its four implementations.
 
-## 9. Provenance & replay
+## 10. Provenance & replay
 
 Every accepted order is appended to `user://order_log/<match_id>.ndjson` with
 `to_dict()` plus `accepted_at_ms`. Every rejected order goes to a sibling
@@ -348,7 +477,7 @@ This trio is the input format for:
 - Bug repro: `--replay <match_id>` boot mode reissues every accepted order at
   recorded timestamps. (Stretch — doc 12 territory.)
 
-## 10. Spatial-vocabulary integration
+## 11. Spatial-vocabulary integration
 
 Doc 06 §4 introduces three layers:
 1. **Grid** — A1..H8 letterbox map (e.g. 16x16 cells across the playfield).
@@ -366,7 +495,7 @@ Spec 07 only needs to declare the *shape* of the targeting fields; spec 09 owns 
 resolution logic (handles "what if the landmark moved?", "what if a unit died between
 plan emit and execution?").
 
-## 11. Boundaries
+## 12. Boundaries
 
 - **07 ↔ 08:** `ActionPlan` is the LLM tool's structured-output shape. The tool's
   JSON schema is generated from `ActionPlan.to_dict()` keys + `OrderTypeRegistry`
@@ -379,7 +508,7 @@ plan emit and execution?").
 - **07 ↔ 12:** The `.ndjson` order log is replayable by 12's test harness; replays
   push a deterministic stream into `submit_orders()`.
 
-## 12. Files
+## 13. Files
 
 ### New files (this spec defines)
 - `godot/scripts/command/tactical_order.gd` — `TacticalOrder` Resource.
@@ -407,11 +536,11 @@ plan emit and execution?").
 - `docs/specs/05-godot-smoke-test-checklist.md` — extend with command-system
   smoke section after the implementation lands.
 
-## 13. Verification (skeleton)
+## 14. Verification (skeleton)
 
 A 07 implementation is "skeleton-complete" when:
 1. All Resources / autoloads / runner classes parse without error in headless boot.
-2. GUT: every test file in §12 passes.
+2. GUT: every test file in §13 passes.
 3. A trivial integration test: `submit_orders([move_to_grid_a3])` makes the
    `order_issued` signal fire with the matching order, and the order appears in
    `get_recent_orders()`.

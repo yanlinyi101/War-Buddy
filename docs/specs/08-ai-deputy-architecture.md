@@ -380,6 +380,10 @@ extends Resource
 @export var refusal_patterns: Array[String] = []       # things this deputy won't do, in-character
 @export var preferred_model: StringName = &"deepseek-chat"
 @export var consolidation_model: StringName = &"claude-haiku-4-20251022"
+
+# Autonomy axis (range [0.0, 1.0]). Behavioral semantics defined in §11.8.
+# Player-configurable in war-room (doc 10); persisted as part of persona.
+@export_range(0.0, 1.0, 0.05) var deputy_autonomy: float = 0.5
 ```
 
 v1 ships three Deputy personas as `.tres`. All three fill the **single deputy
@@ -610,6 +614,47 @@ Captains continue to run normally because they're not at the deputy seat.
 networking territory and is **deferred**. v1 archon mode is local-only (same
 keyboard, "press F2 to take the seat" debug toggle), enough to validate the
 control-policy plumbing.
+
+## 11.8 Deputy autonomy & ambiguity arbitration
+
+The deputy's `deputy_autonomy ∈ [0, 1]` parameter (defined as data in 07 §7 and on `DeputyPersona` in §9) governs how the deputy resolves ambiguity, missing units, and conflicting commands at runtime.
+
+### 11.8.1 Bands
+
+| Band | Range | Behavior on ambiguity / missing units |
+|---|---|---|
+| Cautious | `≤ 0.3` | Emit clarification request (non-`ActionPlan` event), wait for player. No orders issued until clarified. |
+| Balanced | `0.3 — 0.7` | Act on most likely interpretation **and** emit a parallel clarification event ("I'm sending alpha to B4 — confirm?"). Do not block. |
+| Bold | `≥ 0.7` | Act on most likely interpretation. Clarification only on novel / dangerous situations (defined as: emergency-priority command, irreversible action, or `target_kind = ambiguous` with > 3 candidates). |
+
+### 11.8.2 Clarification decay (repeated-error tolerance)
+
+Across all bands, the deputy tracks recent player command quality. When the player issues commands that the deputy must repeatedly clarify (or that turn out to be wrong / contradicted by the player's next utterance), clarification frequency **decays** — the deputy gradually shifts toward acting on best interpretation, regardless of nominal autonomy band.
+
+Decay model (v1 — refinable in 08+1):
+
+```
+clarification_score := 1.0      # at match start
+
+on every clarification request:
+    clarification_score *= 0.85
+
+on every player command that overrides the deputy's just-clarified action:
+    clarification_score *= 0.7
+
+on every match-tick of normal operation:
+    clarification_score := min(1.0, clarification_score + 0.001)
+```
+
+The effective threshold for emitting a clarification is `nominal_threshold * clarification_score`. Below `0.3 * autonomy`, the deputy stops clarifying entirely and falls back to best-effort action — even at low autonomy. The intent: a low-autonomy ("cautious") deputy with a chronically-careless player won't deadlock the match by demanding clarifications no one will answer.
+
+This is the cognitive "the deputy learns to act rather than nag" mechanism that sits at the heart of vision §2.3's "deputy as character." It is also one of the few numeric handles the player can feel changing across matches as their relationship with the deputy matures.
+
+### 11.8.3 Failure-mode interaction
+
+Clarification events are **not** orders. They flow through `Deputy.speak()` (HUD bubble), not through `CommandBus`. They do not appear in the order log; they appear in a sibling `clarification_log.ndjson` for replay/debug. Player responses to clarifications enter the system as fresh utterances at `ClassifierRouter.handle_utterance` and are logged there.
+
+If a clarification times out (player ignores for > 30s), the deputy auto-resolves at the current band's default action (Balanced/Bold: act on best interpretation; Cautious: drop the command with `failed` status and a "I gave up waiting" speech).
 
 ## 12. Boundaries
 
