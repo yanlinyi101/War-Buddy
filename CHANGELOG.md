@@ -2,6 +2,27 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.4.0] — 2026-04-27
+
+### Added
+- **AI Deputy core (vision §2.2 + §2.3)** — single off-field deputy seat with a real LLM-driven plan pipeline. Doc 08 skeleton lands; Captain and Archon follow in v0.5.0.
+- **`DeputyLLMClient` interface** — abstract async `submit_plan(req) -> resp` with `SubmitPlanRequest` / `SubmitPlanResponse` data classes.
+- **`MockClient`** — keyword-routed canned ActionPlans driving every test and serving as the no-API-key fallback.
+- **`AnthropicClient`** — real Anthropic Messages API integration via `HTTPRequest`, single-tool `submit_plan` with JSON schema generated from `OrderTypeRegistry`. Defaults to `claude-sonnet-4-5-20250929`; configurable per persona. `ANTHROPIC_API_KEY` env var; key absence falls back to `MockClient`.
+- **`Deputy` Node** — off-field per vision §2.3; `handle_plan` validates persona-allowed type ids, speaks plan-level rationale via `spoke` signal, dispatches orders to `CommandBus`. No CharacterBody3D, no HP, cannot die.
+- **`ClassifierRouter`** — single front door; one LLM call per utterance returns an `ActionPlan` (vision §2.4 strict A-chain — never directly addressable to captains).
+- **`BattlefieldSnapshotBuilder`** — produces the cropped Dictionary observation (`match_meta`, `you`, `units`, `enemies`, `recent_events`, `player_signals`, `available_orders`). v1 stub queries scene-tree groups; doc 09 swaps to `GameState`.
+- **`DeputyMemory` Resource + `MemoryStore` autoload** — JSON persistence under `user://deputies/<id>.json`. Match-time read-only; mutations only at end-of-match consolidation (consolidate path lands when 09's match_end signal lands).
+- **`DeputyPersona` Resource + `deputy_veteran.tres`** — persona schema with system-prompt template, allowed type ids, refusal patterns, preferred / consolidation models.
+- **HUD `MessageBubbleHud`** — bottom-center transient bubble; 4 s hold + 1 s fade; listens for `Deputy.spoke`.
+- **Tests** — 18 new GUT cases (`test_mock_client`, `test_deputy_memory`, `test_battlefield_snapshot_builder`, `test_deputy`, `test_classifier_router`) bring total green count to 82.
+
+### Notes
+- Captain and Archon deferred to v0.5.0 — both are designed in spec 08 §11.6 / §11.7 and waiting on a dedicated implementation plan.
+- Snapshot builder won't see `recent_events` until `EventBus` lands in doc 09. Memory consolidation is wired but is a no-op until match-end events exist.
+- Streaming HUD bubble (token-by-token narration during LLM thinking) is not in v0.4.0 — current behavior is "wait for the tool call, then show full rationale". Streaming lands when the LoL/voice rework or doc 11 ships.
+- Orders still don't actually move units (doc 09's executors not built yet). The deputy speaks, the bus accepts the orders, the orders sit in `pending` — that's expected v0.4.0 scope.
+
 ## [v0.3.0] — 2026-04-27
 
 ### Added

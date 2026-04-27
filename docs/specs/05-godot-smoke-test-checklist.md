@@ -82,3 +82,20 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] After a brief run, `user://order_log/<match_id>.plans.ndjson` contains a JSON line for the inline sample plan
 - [ ] All 64 GUT tests pass
 - [ ] Phase C squad puppets and Phase A hero controls still work (regression check)
+
+## AI Deputy (v0.4.0)
+
+### Auto (no API key required)
+- [ ] Headless boot prints `[RTSMVP] Deputy active: persona=deputy_veteran llm=MockClient`
+- [ ] All 82 GUT tests pass
+- [ ] In editor F5: type `move to mid` in the command panel and submit — a bubble appears at bottom-center reading something like `[deputy] Repositioning forces.`
+- [ ] After the bubble fires, the Output log shows `[RTSMVP] Deputy deputy: ...`
+- [ ] Type `good job` — bubble appears with no order added to the bus
+- [ ] Type `TIMEOUT please` — bubble shows the failure text, no orders dispatched
+
+### Manual (requires `ANTHROPIC_API_KEY`)
+- [ ] Set `ANTHROPIC_API_KEY` in the environment, then run from editor F5
+- [ ] Boot prints `llm=AnthropicClient`
+- [ ] Type `focus fire on the central building` — within ~3 s, a bubble appears with deputy-flavored text and at least one `attack` or `move` order lands in the bus
+- [ ] No orders sit in the rejected ndjson (`user://order_log/<match_id>.rejected.ndjson` should be missing or empty)
+- [ ] Persona voice style is detectable (calm, terse, chess metaphors per `deputy_veteran.tres`)
