@@ -24,6 +24,7 @@ window/stretch/mode="canvas_items"
 
 OrderTypeRegistry="*res://scripts/command/order_type_registry.gd"
 CommandBus="*res://scripts/command/command_bus.gd"
+MemoryStore="*res://scripts/ai/memory_store.gd"
 
 [editor_plugins]
 

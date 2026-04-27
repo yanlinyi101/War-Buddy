@@ -9,6 +9,11 @@ const PrePlanRunnerScript = preload("res://scripts/command/pre_plan_runner.gd")
 const RegistryScript = preload("res://scripts/command/order_type_registry.gd")
 const PrePlanScript = preload("res://scripts/command/pre_plan.gd")
 const TacticalOrderScript = preload("res://scripts/command/tactical_order.gd")
+const DeputyScript = preload("res://scripts/ai/deputy.gd")
+const ClassifierRouterScript = preload("res://scripts/ai/classifier_router.gd")
+const MockClientScript = preload("res://scripts/ai/mock_client.gd")
+const AnthropicClientScript = preload("res://scripts/ai/anthropic_client.gd")
+const SnapshotBuilderScript = preload("res://scripts/ai/battlefield_snapshot_builder.gd")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -20,6 +25,10 @@ var match_state = null
 var selection_set = null
 var dev_controller = null
 var pre_plan_runner = null
+var deputy = null
+var classifier_router = null
+var snapshot_builder = null
+var llm_client: RefCounted = null
 
 func _ready() -> void:
 	_register_core_order_types()
@@ -74,6 +83,35 @@ func _ready() -> void:
 	pre_plan_runner.add_plan(_make_sample_match_start_plan())
 	pre_plan_runner.notify_event(&"match_start", {"elapsed_s": 0})
 	print("[RTSMVP] PrePlanRunner: notified match_start")
+
+	# --- Deputy + classifier wiring ---
+	snapshot_builder = SnapshotBuilderScript.new()
+	snapshot_builder.name = "BattlefieldSnapshotBuilder"
+	add_child(snapshot_builder)
+
+	var persona: Resource = load("res://data/personas/deputy_veteran.tres")
+	if persona == null:
+		push_error("Bootstrap: deputy_veteran.tres failed to load")
+	deputy = DeputyScript.new()
+	deputy.name = "Deputy"
+	deputy.deputy_id = &"deputy"
+	deputy.persona = persona
+	deputy.bind_command_bus(CommandBus)
+	deputy.bind_memory(MemoryStore.load_memory(&"deputy"))
+	add_child(deputy)
+	deputy.spoke.connect(_on_deputy_spoke)
+
+	llm_client = _make_llm_client()
+	classifier_router = ClassifierRouterScript.new()
+	classifier_router.name = "ClassifierRouter"
+	classifier_router.bind(deputy, llm_client, snapshot_builder, OrderTypeRegistry)
+	add_child(classifier_router)
+
+	hud.utterance_submitted.connect(classifier_router.handle_utterance.bind(&"text_input"))
+	print("[RTSMVP] Deputy active: persona=%s llm=%s" % [
+		String(persona.persona_id) if persona != null else "<none>",
+		_llm_kind_name(llm_client),
+	])
 
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
@@ -133,6 +171,28 @@ func _make_def(id: StringName, schema: Dictionary, deputies: Array, min_targets:
 	d.allowed_deputies = typed_deps
 	d.min_targets = min_targets
 	return d
+
+func _make_llm_client() -> RefCounted:
+	var anthropic = AnthropicClientScript.new()
+	anthropic.attach_to(self)
+	if anthropic.has_api_key():
+		return anthropic
+	# Fallback: Mock client when no key is configured.
+	return MockClientScript.new()
+
+func _llm_kind_name(client: RefCounted) -> String:
+	if client == null:
+		return "<none>"
+	if client is AnthropicClientScript:
+		return "AnthropicClient"
+	if client is MockClientScript:
+		return "MockClient"
+	return "<unknown>"
+
+func _on_deputy_spoke(text: String, deputy_id: StringName) -> void:
+	if hud != null and hud.has_method("show_deputy_bubble"):
+		hud.show_deputy_bubble(text, deputy_id)
+	print("[RTSMVP] Deputy %s: %s" % [String(deputy_id), text])
 
 func _make_sample_match_start_plan() -> Resource:
 	var trigger = PrePlanScript.PrePlanTrigger.new()

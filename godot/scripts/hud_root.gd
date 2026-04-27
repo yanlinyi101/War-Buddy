@@ -2,6 +2,7 @@ extends CanvasLayer
 class_name HudRoot
 
 signal command_submitted(channel: String, text: String)
+signal utterance_submitted(text: String)
 signal voice_placeholder_clicked
 
 @onready var hero_status_label: Label = %HeroStatusLabel
@@ -15,6 +16,7 @@ signal voice_placeholder_clicked
 @onready var victory_overlay: Control = %VictoryOverlay
 @onready var help_label: Label = %HelpLabel
 @onready var dev_mode_label: Label = %DevModeLabel
+@onready var message_bubble_hud: Control = %MessageBubbleHud
 
 func _ready() -> void:
 	channel_selector.clear()
@@ -30,6 +32,10 @@ func _ready() -> void:
 func show_dev_label() -> void:
 	if dev_mode_label != null:
 		dev_mode_label.visible = true
+
+func show_deputy_bubble(text: String, deputy_id: StringName) -> void:
+	if message_bubble_hud != null and message_bubble_hud.has_method("display"):
+		message_bubble_hud.display(text, deputy_id)
 
 func bind_hero_state(hero_state) -> void:
 	hero_state.health_changed.connect(_on_hero_health_changed)
@@ -69,6 +75,7 @@ func _submit_current_command() -> void:
 	voice_status_label.text = "Deputies are fake for now, but the command pipeline is alive."
 	var channel := "combat" if channel_selector.selected == 0 else "economy"
 	command_submitted.emit(channel, text)
+	utterance_submitted.emit(text)
 	command_input.clear()
 
 func _on_voice_pressed() -> void:
