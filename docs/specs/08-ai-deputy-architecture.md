@@ -29,6 +29,10 @@ behavior trees.
 **In scope:**
 - `Deputy` Node — the per-deputy runtime entity (one seat per faction; vision §2.5
   collapses combat-officer + economy-officer into a single deputy seat).
+  **Off-field per vision §2.3** — the Deputy has no `CharacterBody3D`, no collision,
+  no HP. Its presence on-screen is a HUD portrait + name + voice bubble. It cannot
+  be attacked or killed; the player's risk surface with the Deputy is purely
+  cognitive ("is my deputy understanding me right now?").
 - `Captain` Node — lighter LLM agent embodied as a battlefield unit; multiple per
   match.
 - `ArchonController` — human takeover layer at the deputy seat (vision §2.5).
@@ -41,8 +45,11 @@ behavior trees.
 - Tier latency policy (vision §2.4) — pre-plan / tactical / strategic — applies to
   both Deputy and Captain calls.
 - `DeputyMemory` Resource and `MemoryStore` autoload — cross-match persistence for
-  Deputy. Captain memory model is in-match only at v1; cross-match persistence depth
-  for Captain is **TBD per vision §2.3** and resolved in 08+1.
+  Deputy and Captains. Per vision §2.3, captains carry **persistent memory + ≤15%
+  per-axis stat reinforcement + full mortality**; the memory layer is owned by 08
+  (this spec) and the stat reinforcement layer is owned by 09 (which queries the
+  memory). Captain memory survives a captain's death — when the same captain
+  persona is summoned again in a later match, its memory carries forward.
 - `DeputyPersona` and `CaptainPersona` Resources — name, archetype, voice style,
   system-prompt template, trait scalars, quirks. Captain persona is lighter
   (smaller prompt, smaller model, smaller anecdote allowance).
@@ -73,7 +80,7 @@ behavior trees.
    ┌──────────────────────────────────────────────────────────────┐
    │ ClassifierRouter                                             │
    │   build snapshot via BattlefieldSnapshotBuilder              │
-   │   address the single Deputy (or a specific Captain by id)    │
+   │   address the single Deputy ONLY (strict A-chain, vision §2.4)│
    │   call DeputyLLMClient.submit_plan(                          │
    │     persona = combat_persona,                                │
    │     memory = combat_memory_snapshot,                         │
@@ -151,7 +158,8 @@ signal classification_failed(utterance: String, reason: StringName)
 func handle_utterance(text: String, source: StringName) -> void
     # source = &"text_input" | &"voice" | &"dev_console"
     # 1. build snapshot
-    # 2. pick deputy candidate set (default: both — let LLM decide which to address)
+    # 2. address the single Deputy seat (strict A-chain per vision §2.4 —
+    #    captains are NEVER directly addressable by the player)
     # 3. call llm_client.submit_plan() once
     # 4. on response:
     #      for each plan in plans:
@@ -435,12 +443,12 @@ HUD bubble. No silent failures.
 
 08 implements three of the four ladder tiers; 09 owns the fourth.
 
-| Tier | Module(s) in 08 | LLM model class | Memory horizon | Bond surface |
-|---|---|---|---|---|
-| **Hero** | `Agent.speak` only (death-line utterances per §2.3) | none — player-controlled | n/a | direct (player avatar) |
-| **Deputy** | `Deputy`, `MemoryStore`, full `DeputyPersona`, full snapshot | top-tier (Sonnet) | persistent: matches, anecdotes, traits, phrases | long-term, single bond per faction |
-| **Captain** | `Captain`, `CaptainShortTermMemory`, lighter `CaptainPersona`, narrowed snapshot | mid-tier (Haiku or equivalent) | in-match only at v1; cross-match TBD | short-to-medium per vision §2.3 |
-| **Regular** | — (doc 09: behavior trees, no agent layer) | n/a | n/a | none (disposable) |
+| Tier | Module(s) in 08 | Embodiment | LLM model class | Memory horizon | Mortality |
+|---|---|---|---|---|---|
+| **Hero** | `Agent.speak` only (death-line utterances per §2.3) | On-field unit | none — player-controlled | n/a | full mortality, ragdoll + soul |
+| **Deputy** | `Deputy`, `MemoryStore`, full `DeputyPersona`, full snapshot | **Off-field** — HUD portrait + voice | top-tier (Sonnet) | persistent: matches, anecdotes, traits, phrases | **invulnerable** (cognitive failure surface only) |
+| **Captain** | `Captain`, `CaptainMemory`, `CaptainPersona`, narrowed snapshot | On-field unit | mid-tier (Haiku or equivalent) | persistent across matches; per-captain `.tres`; ≤15%/axis reinforcement | full mortality, ragdoll + soul |
+| **Regular** | — (doc 09: behavior trees, no agent layer) | On-field unit | n/a | n/a | full mortality, ragdoll only |
 
 The shared infrastructure (`ClassifierRouter`, `DeputyLLMClient`,
 `BattlefieldSnapshotBuilder`) parameterizes by agent tier — same code paths, different
@@ -475,8 +483,10 @@ A Captain wakes up in two situations:
 1. **Receives an ActionPlan addressed to its `captain_id` or `squad_id`** — same
    path as Deputy (router routes plan to Captain's `handle_plan`). The Captain
    may issue sub-orders to its own squad's units via `CommandBus.submit_orders`
-   with `issuer = DEPUTY_COMBAT` (or a future `CAPTAIN_*` issuer; we extend 07's
-   `Issuer` enum when this lands rather than now).
+   with `issuer = CAPTAIN` (07's `Issuer` enum already includes this — see strict
+   A-chain in spec 07 §2). Captain-issued orders to its own squad units flow
+   directly through `submit_orders`, not through another `submit_plan`, because
+   captains are not LLM planners; they are the leaf agent in the strict A-chain.
 2. **Periodic tick** — every K seconds (default 8s, configurable per persona),
    Captain calls `ClassifierRouter` with no utterance and a `tier_hint = &"tactical"`,
    asking the LLM "anything you want to do, given current state?" The LLM may emit
@@ -493,21 +503,49 @@ A Captain wakes up in two situations:
   K=8s autonomous = ~37 LLM calls/minute for autonomous + reactive on top. Vision
   §2.4 names this as a real budget constraint; doc 12 must measure it.
 
-**Captain memory:**
+**Captain memory (vision §2.3):**
 
-v1 ships with **in-match short-term memory only**. The Captain's last 6 plans plus
-the events that happened around them are kept in RAM and injected into each LLM
-call. No persistence to disk; when the match ends, the Captain's memory is lost.
+Per the locked-in vision, Captains carry **persistent memory + ≤15% per-axis stat
+reinforcement + full mortality**. Memory survives the captain's death — when the
+same captain persona is summoned again in a later match, its memory carries
+forward.
 
-Vision §2.3 says Captain cross-match memory depth is **TBD by testing**. Sub-doc
-08+1 (or doc 12's testing track) decides:
-- Whether Captains carry a single-line "previous-match-impression" forward.
-- Whether named Captains (recurring story characters) get the full Deputy memory
-  treatment.
-- Whether the player can promote a Captain to Deputy after enough shared matches.
+```gdscript
+class_name CaptainMemory
+extends Resource
 
-The data model is forward-compatible: `Captain` has a `persistent_memory` slot
-that's null at v1 but can be filled later without changing the call sites.
+@export var captain_persona_id: StringName       # links to a CaptainPersona resource
+@export var match_appearances: int = 0
+@export var matches_won_alongside: int = 0
+@export var deaths: int = 0                      # cumulative across matches; lifecycle metric
+@export var preferred_axis: StringName = &""     # which stat axis this captain bonded into (e.g. &"hp", &"dps", &"sight")
+@export var reinforcement_pct: float = 0.0       # 0.0..0.15 — clamped at 0.15 per vision §2.3
+@export var match_anecdotes: Array[String] = []  # 0-12 short, captain-flavored memories
+@export var schema_version: int = 1
+```
+
+Storage: `user://captains/<captain_persona_id>.tres`. `MemoryStore` (already an
+autoload) gains parallel methods:
+
+```gdscript
+func load_captain(persona_id: StringName) -> CaptainMemory
+func save_captain(memory: CaptainMemory) -> void
+func snapshot_captain_for(persona_id: StringName) -> Dictionary
+func consolidate_captain_after_match(
+    persona_id: StringName,
+    match_summary: Dictionary,
+    llm_client: DeputyLLMClient
+) -> void
+```
+
+**Reinforcement seam to doc 09:** Doc 09 owns combat stats. When 09 spawns a
+captain, it queries `MemoryStore.snapshot_captain_for(persona_id)` and applies the
+`reinforcement_pct` to the chosen `preferred_axis` at unit-instantiation time. The
+clamp `0.15` is enforced in 08 at write time, not in 09. This keeps the cap in one
+place.
+
+**LLM-call snapshot:** Captain's last 6 plans + the events around them remain in
+RAM short-term as before; the persistent layer is in addition, not in place of.
 
 ## 11.7. Archon mode (`archon_controller.gd`)
 

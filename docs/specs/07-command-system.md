@@ -69,6 +69,23 @@ The bus has exactly two ingress methods: `submit_plan(plan)` (deputies, post-LLM
 `submit_orders(orders)` (pre-plans, scripted events, dev tools). Anything that issues
 commands goes through one of these. No alternative paths.
 
+**Strict A-chain enforcement (vision §2.4):** every player-issued plan addresses the
+single Deputy seat. The Deputy decomposes complex plans by re-emitting `submit_plan`
+calls with `issuer = DEPUTY` and the target captain's `target_squad_id` (each captain
+leads exactly one squad). Captains in turn issue `submit_orders` (not plans) to their
+own squad units with `issuer = CAPTAIN`. The bus does not police this hierarchy —
+that is `ControlPolicy`'s job (§8) — but the canonical flow is:
+
+```
+Player utterance ──► ClassifierRouter ──► submit_plan (issuer=PLAYER, deputy="deputy")
+                                          │
+                       Deputy.handle_plan ──► submit_plan (issuer=DEPUTY, target_squad_id=captain_id)
+                                              │
+                          Captain.handle_plan ──► submit_orders (issuer=CAPTAIN, target_unit_ids=[...])
+                                                  │
+                                            Executor (09)
+```
+
 ## 3. `TacticalOrder` Resource
 
 ```gdscript
@@ -83,7 +100,7 @@ extends Resource
 @export var deputy: StringName = &""      # which deputy executes; "" = hero or scripted
 
 enum Origin { PRE_PLAN, TACTICAL_VOICE, STRATEGIC_DECOMPOSITION, SCRIPT, HERO_DIRECT }
-enum Issuer { PLAYER, DEPUTY_COMBAT, DEPUTY_ECONOMY }
+enum Issuer { PLAYER, DEPUTY, CAPTAIN, SCRIPT }
 
 # --- Targeting (vision §4 spatial vocabulary minus player-named regions) ---
 @export var target_unit_ids: Array[int] = []
