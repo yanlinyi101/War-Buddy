@@ -5,6 +5,10 @@ const MatchStateScript = preload("res://scripts/match_state.gd")
 const SquadUnitScene = preload("res://scenes/squad_unit.tscn")
 const SelectionSetScript = preload("res://scripts/squads/selection_set.gd")
 const DevSquadControllerScript = preload("res://scripts/dev/dev_squad_controller.gd")
+const PrePlanRunnerScript = preload("res://scripts/command/pre_plan_runner.gd")
+const RegistryScript = preload("res://scripts/command/order_type_registry.gd")
+const PrePlanScript = preload("res://scripts/command/pre_plan.gd")
+const TacticalOrderScript = preload("res://scripts/command/tactical_order.gd")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -15,8 +19,13 @@ var command_log = null
 var match_state = null
 var selection_set = null
 var dev_controller = null
+var pre_plan_runner = null
 
 func _ready() -> void:
+	_register_core_order_types()
+	CommandBus.set_registry(OrderTypeRegistry)
+	CommandBus.match_id = "match_%d" % Time.get_unix_time_from_system()
+
 	match_state = MatchStateScript.new()
 	match_state.name = "MatchState"
 	add_child(match_state)
@@ -55,6 +64,17 @@ func _ready() -> void:
 		hud.show_dev_label()
 		print("[RTSMVP] Bootstrap: dev squad controller active (debug build)")
 
+	pre_plan_runner = PrePlanRunnerScript.new()
+	pre_plan_runner.name = "PrePlanRunner"
+	pre_plan_runner.set_command_bus(CommandBus)
+	add_child(pre_plan_runner)
+	pre_plan_runner.load_from_directory("res://data/preplans")
+	# Inline sample plan (until doc 10 ships .tres authoring): match_start trigger,
+	# zero orders. Verifies the runner pipeline + plan-buffer persistence.
+	pre_plan_runner.add_plan(_make_sample_match_start_plan())
+	pre_plan_runner.notify_event(&"match_start", {"elapsed_s": 0})
+	print("[RTSMVP] PrePlanRunner: notified match_start")
+
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
 		match_state.register_enemy_building(node)
@@ -89,3 +109,37 @@ func _spawn_squad_units() -> void:
 		unit.unit_id = "squad_%s" % char(97 + i)  # squad_a, squad_b, squad_c
 		unit.position = hero.global_position + offsets[i]
 		world.add_child(unit)
+
+func _register_core_order_types() -> void:
+	var defs = [
+		_make_def(&"move", {}, [], 1),
+		_make_def(&"attack", {}, [], 1),
+		_make_def(&"stop", {}, [], 0),
+		_make_def(&"hold", {}, [], 0),
+		_make_def(&"use_skill", {"skill_id": "string"}, [], 0),
+	]
+	for d in defs:
+		OrderTypeRegistry.register(d)
+	print("[RTSMVP] OrderTypeRegistry: registered %d core types" % defs.size())
+
+func _make_def(id: StringName, schema: Dictionary, deputies: Array, min_targets: int):
+	var d = RegistryScript.TypeDef.new()
+	d.id = id
+	d.description = "core"
+	d.param_schema = schema
+	var typed_deps: Array[StringName] = []
+	for dep in deputies:
+		typed_deps.append(dep)
+	d.allowed_deputies = typed_deps
+	d.min_targets = min_targets
+	return d
+
+func _make_sample_match_start_plan() -> Resource:
+	var trigger = PrePlanScript.PrePlanTrigger.new()
+	trigger.event = &"match_start"
+	var plan = PrePlanScript.PrePlan.new()
+	plan.name = "Sample: opening invocation"
+	plan.deputy = &"deputy"
+	plan.trigger = trigger
+	plan.orders = [] as Array[Resource]
+	return plan

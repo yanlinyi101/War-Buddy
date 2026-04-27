@@ -1,4 +1,5 @@
-class_name CommandBus
+# Autoload as `CommandBus` via project.godot.
+# class_name omitted to avoid colliding with the autoload symbol of the same name.
 extends Node
 
 const TacticalOrder = preload("res://scripts/command/tactical_order.gd")

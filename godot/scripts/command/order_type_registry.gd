@@ -1,4 +1,5 @@
-class_name OrderTypeRegistry
+# Autoload as `OrderTypeRegistry` via project.godot.
+# class_name omitted to avoid colliding with the autoload symbol of the same name.
 extends Node
 
 class TypeDef:
