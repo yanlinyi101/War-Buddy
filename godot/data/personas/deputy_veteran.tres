@@ -23,5 +23,5 @@ priority_traits = {
 quirks = ["uses chess openings as analogies", "prefers single-line summaries"]
 allowed_type_ids = [&"move", &"attack", &"stop", &"hold", &"use_skill"]
 refusal_patterns = ["suicide charge", "leave hero exposed"]
-preferred_model = &"claude-sonnet-4-5-20250929"
-consolidation_model = &"claude-haiku-4-5-20251022"
+preferred_model = &"deepseek-chat"
+consolidation_model = &"deepseek-chat"

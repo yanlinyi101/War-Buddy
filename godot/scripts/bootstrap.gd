@@ -12,6 +12,7 @@ const TacticalOrderScript = preload("res://scripts/command/tactical_order.gd")
 const DeputyScript = preload("res://scripts/ai/deputy.gd")
 const ClassifierRouterScript = preload("res://scripts/ai/classifier_router.gd")
 const MockClientScript = preload("res://scripts/ai/mock_client.gd")
+const DeepseekClientScript = preload("res://scripts/ai/deepseek_client.gd")
 const AnthropicClientScript = preload("res://scripts/ai/anthropic_client.gd")
 const SnapshotBuilderScript = preload("res://scripts/ai/battlefield_snapshot_builder.gd")
 
@@ -173,16 +174,25 @@ func _make_def(id: StringName, schema: Dictionary, deputies: Array, min_targets:
 	return d
 
 func _make_llm_client() -> RefCounted:
+	# Provider precedence (cost-first ordering):
+	#   1. DeepSeek — primary, cheapest, OpenAI-compatible tool-use.
+	#   2. Anthropic — fallback when DEEPSEEK_API_KEY missing but ANTHROPIC_API_KEY present.
+	#   3. Mock     — final fallback for CI / offline dev.
+	var deepseek = DeepseekClientScript.new()
+	deepseek.attach_to(self)
+	if deepseek.has_api_key():
+		return deepseek
 	var anthropic = AnthropicClientScript.new()
 	anthropic.attach_to(self)
 	if anthropic.has_api_key():
 		return anthropic
-	# Fallback: Mock client when no key is configured.
 	return MockClientScript.new()
 
 func _llm_kind_name(client: RefCounted) -> String:
 	if client == null:
 		return "<none>"
+	if client is DeepseekClientScript:
+		return "DeepseekClient"
 	if client is AnthropicClientScript:
 		return "AnthropicClient"
 	if client is MockClientScript:

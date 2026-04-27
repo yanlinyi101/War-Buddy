@@ -10,5 +10,5 @@ extends Resource
 @export var quirks: Array[String] = []
 @export var allowed_type_ids: Array[StringName] = []
 @export var refusal_patterns: Array[String] = []
-@export var preferred_model: StringName = &"claude-sonnet-4-5-20250929"
-@export var consolidation_model: StringName = &"claude-haiku-4-5-20251022"
+@export var preferred_model: StringName = &"deepseek-chat"
+@export var consolidation_model: StringName = &"deepseek-chat"

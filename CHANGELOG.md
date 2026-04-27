@@ -2,6 +2,21 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.4.1] — 2026-04-27
+
+### Changed
+- **DeepSeek is now the primary LLM provider for the deputy.** DeepSeek's API is OpenAI-compatible (chat-completions endpoint, function-tool wrapper) and roughly an order of magnitude cheaper per million tokens than Anthropic Sonnet at comparable quality for the deputy's structured-tool-call workload — see `docs/specs/08-ai-deputy-architecture.md` for rationale.
+- `bootstrap.gd::_make_llm_client` provider precedence is now **DeepSeek → Anthropic → Mock**. `DEEPSEEK_API_KEY` is the primary env var; `ANTHROPIC_API_KEY` continues to work as a fallback for parity testing.
+- `data/personas/deputy_veteran.tres` and `DeputyPersona`'s default `preferred_model` / `consolidation_model` switched to `deepseek-chat` (DeepSeek's always-current chat alias; resolves to V4 on accounts with V4 enabled).
+
+### Added
+- `godot/scripts/ai/deepseek_client.gd` — `DeepseekClient` extends `DeputyLLMClient`. Uses DeepSeek's OpenAI-compatible `/v1/chat/completions` endpoint with the standard function-tool wrapper. Parses `choices[0].message.tool_calls[0].function.arguments` (which arrives as a JSON-encoded string, unlike Anthropic's pre-parsed Dictionary) and feeds the result through the same `apply_invariants()` / `validate_invariants()` pipeline as Anthropic.
+- Smoke checklist gains `Manual — DeepSeek` and `Manual — Anthropic` subsections so each provider is tested independently.
+
+### Notes
+- `AnthropicClient` is intentionally retained, not removed. Provider switching is a single env-var change; keeping both implementations validates the abstraction (and gives us an escape hatch if DeepSeek has an outage).
+- No tests added for `DeepseekClient` (live-API tests have cost/non-determinism per spec 08 §13). The MockClient continues to drive automated coverage; manual smoke validates the live path.
+
 ## [v0.4.0] — 2026-04-27
 
 ### Added

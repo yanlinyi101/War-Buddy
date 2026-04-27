@@ -93,9 +93,15 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] Type `good job` — bubble appears with no order added to the bus
 - [ ] Type `TIMEOUT please` — bubble shows the failure text, no orders dispatched
 
-### Manual (requires `ANTHROPIC_API_KEY`)
-- [ ] Set `ANTHROPIC_API_KEY` in the environment, then run from editor F5
-- [ ] Boot prints `llm=AnthropicClient`
+### Manual — DeepSeek (primary, requires `DEEPSEEK_API_KEY`)
+- [ ] Set `DEEPSEEK_API_KEY` in the environment, then run from editor F5
+- [ ] Boot prints `llm=DeepseekClient`
 - [ ] Type `focus fire on the central building` — within ~3 s, a bubble appears with deputy-flavored text and at least one `attack` or `move` order lands in the bus
 - [ ] No orders sit in the rejected ndjson (`user://order_log/<match_id>.rejected.ndjson` should be missing or empty)
 - [ ] Persona voice style is detectable (calm, terse, chess metaphors per `deputy_veteran.tres`)
+- [ ] Output log shows `token_usage` numbers (sanity check that DeepSeek returned a valid envelope)
+
+### Manual — Anthropic (fallback, requires `ANTHROPIC_API_KEY` and **no** `DEEPSEEK_API_KEY`)
+- [ ] Unset `DEEPSEEK_API_KEY`, set `ANTHROPIC_API_KEY`, then F5
+- [ ] Boot prints `llm=AnthropicClient`
+- [ ] Same utterance behavior as DeepSeek section

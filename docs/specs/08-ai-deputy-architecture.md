@@ -6,7 +6,10 @@ primary input), §2.3 (agent-tier ladder Hero → Deputy → Captain → Regular
 (three command tiers), §2.5 (hybrid deputy modes: AI primary, human archon
 secondary).
 **Sibling spec:** `07-command-system.md` (consumer of this spec's `ActionPlan` output).
-**Engine:** Godot 4.6.x + LLM provider HTTPS (Anthropic Messages API default).
+**Engine:** Godot 4.6.x + LLM provider HTTPS. Provider precedence (cost-first):
+1. **DeepSeek** (default — OpenAI-compatible API at `https://api.deepseek.com/v1/chat/completions`; `DEEPSEEK_API_KEY` env var; ~10× cheaper per 1M tokens than Anthropic Sonnet at comparable quality for this kind of structured-tool-call workload).
+2. **Anthropic Messages API** (fallback when DEEPSEEK_API_KEY absent but ANTHROPIC_API_KEY present).
+3. **Mock** (final fallback for CI / offline dev).
 
 ## 1. Purpose & scope
 
@@ -38,7 +41,7 @@ behavior trees.
 - `ArchonController` — human takeover layer at the deputy seat (vision §2.5).
 - `ClassifierRouter` — the single LLM tool-call front door that turns an utterance
   into an `ActionPlan` (used by both Deputy and any addressable Captain).
-- `DeputyLLMClient` interface + `AnthropicClient` default implementation, shared by
+- `DeputyLLMClient` interface + `DeepseekClient` default + `AnthropicClient` fallback, shared by
   Deputy and Captain agents at different model tiers.
 - `BattlefieldSnapshotBuilder` — produces the cropped observation passed to the LLM,
   cropped further for Captain (smaller spatial scope than Deputy).
@@ -206,11 +209,17 @@ var token_usage: Dictionary = {}      # {input, output} for cost telemetry
 
 ### v1 implementations
 
-- `AnthropicClient` (default): `HTTPRequest` node + Anthropic Messages API,
-  tool-use enabled. Single tool: `submit_plan` with the JSON schema generated from
-  `ActionPlan.to_dict()` + `OrderTypeRegistry`. `ANTHROPIC_API_KEY` env var.
-  Model: `claude-sonnet-4-5-20250929` or current latest sonnet (configured per
-  persona).
+- `DeepseekClient` (**default — primary provider**): `HTTPRequest` node + DeepSeek's
+  OpenAI-compatible chat-completions API at `https://api.deepseek.com/v1/chat/completions`.
+  Single tool `submit_plan` with parameters JSON schema generated from
+  `ActionPlan.to_dict()` + `OrderTypeRegistry`. `DEEPSEEK_API_KEY` env var.
+  Default model alias `deepseek-chat` (always-current chat model; on accounts with
+  DeepSeek V4 enabled this resolves to V4). Override per persona via
+  `preferred_model`.
+- `AnthropicClient` (**fallback**): same role as DeepseekClient via Anthropic Messages
+  API. `ANTHROPIC_API_KEY` env var. Default model `claude-sonnet-4-5-20250929`.
+  Used only when DeepSeek key absent — kept for parity testing and to validate the
+  abstraction.
 - `OllamaClient` (dev): same interface, points at local `http://localhost:11434`,
   uses an OpenAI-compatible tool-use shim. For free dev/testing.
 - `RelayClient` (ship — deferred): same interface, points at our own backend that
@@ -369,7 +378,7 @@ extends Resource
 @export var quirks: Array[String] = []          # short colorful tics
 @export var allowed_type_ids: Array[StringName] = []   # subset of OrderTypeRegistry
 @export var refusal_patterns: Array[String] = []       # things this deputy won't do, in-character
-@export var preferred_model: StringName = &"claude-sonnet-4-5-20250929"
+@export var preferred_model: StringName = &"deepseek-chat"
 @export var consolidation_model: StringName = &"claude-haiku-4-20251022"
 ```
 
@@ -663,10 +672,10 @@ control-policy plumbing.
 08 is "skeleton-complete" when:
 1. All Resources / autoloads / nodes parse without error in headless boot.
 2. GUT tests in §13 pass (with `MockClient` standing in for live LLM).
-3. With `ANTHROPIC_API_KEY` exported, a manual smoke: type "我们去打中路" in HUD,
-   see deputy bubble appear, see `plan_issued` signal on `CommandBus` carrying
-   a syntactically valid `ActionPlan`. Orders won't execute (doc 09 not done) —
-   that's expected.
+3. With `DEEPSEEK_API_KEY` (or `ANTHROPIC_API_KEY` as fallback) exported, a manual
+   smoke: type "我们去打中路" in HUD, see deputy bubble appear, see `plan_issued`
+   signal on `CommandBus` carrying a syntactically valid `ActionPlan`. Orders
+   won't execute (doc 09 not done) — that's expected.
 4. `MemoryStore` survives a match cycle: start match → consolidate_after_match
    stub → next match's prompt includes `total_matches=1`.
 5. Persona swap visibly changes deputy's bubble voice (manual, eyeball test).
