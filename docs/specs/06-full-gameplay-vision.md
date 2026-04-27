@@ -22,9 +22,9 @@ The player is a commander present in the battlefield, directly controlling one h
 
 Implication: the input vocabulary the player uses to influence the rest of their faction is *commands to subordinates*, not direct unit micro. Multi-select, drag-box, and production queues are explicitly out of scope as primary input.
 
-### 2.2 Real LLM-Driven AI Deputies as the Primary Input Channel
+### 2.2 Real LLM-Driven AI Deputy as the Primary Input Channel
 
-The player commands the rest of their faction through two AI deputies — a combat officer and an economy officer — using **voice as the primary input** and **real LLM reasoning** as the execution backbone. Text input exists only as an MVP-stage validation channel and is not part of the shipped player-facing experience.
+The player commands the rest of their faction through a single AI deputy — one commander-level officer at the top of the agent ladder (§2.3) — using **voice as the primary input** and **real LLM reasoning** as the execution backbone. The deputy delegates specialized work (combat tempo, economy upkeep, scout rotations, defense reactions) to the captain layer beneath; specialization is a property of captains, not of separate deputy seats. Text input exists only as an MVP-stage validation channel and is not part of the shipped player-facing experience.
 
 Implication: command latency, cost, and unpredictability of LLM inference are first-class system constraints. The architecture must absorb them, not pretend they don't exist.
 

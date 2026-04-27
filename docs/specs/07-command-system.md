@@ -304,15 +304,20 @@ func can_issue(issuer: TacticalOrder.Issuer,
                type_id: StringName) -> bool
 ```
 
-v1 ships three policies:
+v1 ships four policies:
 - `FullControlPolicy` — accept everything (default for development).
 - `HeroOnlyPolicy` — player can only issue `origin = HERO_DIRECT`; deputies' plans
   rejected. Used for "I want to play a pure RTS" mode.
 - `AssistModePolicy` — accept deputy plans but log them as "suggestion only" and
   don't dispatch. Used for tutorial / training.
+- `ArchonControlPolicy` — vision §2.5 archon mode. Identical to `FullControl` but
+  **rejects** any plan whose `deputy == archon_attached_seat` and `issuer != PLAYER`.
+  In other words, when a human is wearing the deputy seat, the LLM Deputy's plans
+  for that seat are denied with reason `&"archon_attached"`. Doc 08 §11.7 owns the
+  attach/detach lifecycle; 07 owns this policy implementation.
 
 Vision §2.5 hints the player picks the policy via Settings; that's doc 10's HUD work.
-07 only owns the interface and its three implementations.
+07 only owns the interface and its four implementations.
 
 ## 9. Provenance & replay
 

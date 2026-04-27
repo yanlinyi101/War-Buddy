@@ -1,34 +1,56 @@
 # 08 — AI Deputy Architecture
 
 **Status:** design approved 2026-04-27, awaiting implementation plan.
-**Vision anchor:** `06-full-gameplay-vision.md` §2.2 (two deputies), §2.3 (deputy as
-character), §2.4 (three command tiers).
+**Vision anchors:** `06-full-gameplay-vision.md` §2.2 (LLM-driven AI deputies as
+primary input), §2.3 (agent-tier ladder Hero → Deputy → Captain → Regular), §2.4
+(three command tiers), §2.5 (hybrid deputy modes: AI primary, human archon
+secondary).
 **Sibling spec:** `07-command-system.md` (consumer of this spec's `ActionPlan` output).
 **Engine:** Godot 4.6.x + LLM provider HTTPS (Anthropic Messages API default).
 
 ## 1. Purpose & scope
 
-Vision §2.2 says the player commands two deputies — a combat squad leader and an
-economy officer — and §2.3 names "deputy as character" as a co-equal pillar with the
-RTS gameplay loop. Spec 08 defines the AI side: how a player utterance becomes a
-validated `ActionPlan` (07's keystone artifact), where the LLM lives, what the
-deputy "sees", what persists across matches, and how a deputy's personality is
-specified so two deputies feel different.
+Vision §2.3 names a four-tier agent ladder, and vision §7 explicitly says **doc 08
+covers the whole ladder, not just the deputy**. Spec 08 therefore defines:
+
+- The **Deputy** layer (top-tier LLM agent, single seat per faction, persistent
+  identity across matches).
+- The **Captain** layer (lighter LLM agents, multiple per match, shorter bond, in-match
+  memory only at v1).
+- The hybrid **Archon mode** at the deputy seat — a human player taking the seat
+  in place of the LLM, sharing controls Starcraft-2-Archon-style.
+- The shared infrastructure used by both LLM tiers: `DeputyLLMClient`,
+  `BattlefieldSnapshotBuilder`, `ClassifierRouter`, `MemoryStore`, `DeputyPersona`,
+  failure-mode policy.
+
+Regular units carry no agency in 08; doc 09 owns their `agency_tier` field and
+behavior trees.
 
 **In scope:**
-- `Deputy` Node — the per-deputy runtime entity (one for combat, one for economy).
+- `Deputy` Node — the per-deputy runtime entity (one seat per faction; vision §2.5
+  collapses combat-officer + economy-officer into a single deputy seat).
+- `Captain` Node — lighter LLM agent embodied as a battlefield unit; multiple per
+  match.
+- `ArchonController` — human takeover layer at the deputy seat (vision §2.5).
 - `ClassifierRouter` — the single LLM tool-call front door that turns an utterance
-  into an `ActionPlan`.
-- `DeputyLLMClient` interface + `AnthropicClient` default implementation.
-- `BattlefieldSnapshotBuilder` — produces the cropped observation passed to the LLM.
-- Tier latency policy (vision §2.4).
-- `DeputyMemory` Resource and `MemoryStore` autoload — cross-match persistence
-  (vision §2.3 character pillar).
-- `DeputyPersona` Resource — name, archetype, voice style, system-prompt template,
-  trait scalars, quirks.
-- `Deputy.speak(text)` interface for HUD bubbles; voice TTS wired later.
+  into an `ActionPlan` (used by both Deputy and any addressable Captain).
+- `DeputyLLMClient` interface + `AnthropicClient` default implementation, shared by
+  Deputy and Captain agents at different model tiers.
+- `BattlefieldSnapshotBuilder` — produces the cropped observation passed to the LLM,
+  cropped further for Captain (smaller spatial scope than Deputy).
+- Tier latency policy (vision §2.4) — pre-plan / tactical / strategic — applies to
+  both Deputy and Captain calls.
+- `DeputyMemory` Resource and `MemoryStore` autoload — cross-match persistence for
+  Deputy. Captain memory model is in-match only at v1; cross-match persistence depth
+  for Captain is **TBD per vision §2.3** and resolved in 08+1.
+- `DeputyPersona` and `CaptainPersona` Resources — name, archetype, voice style,
+  system-prompt template, trait scalars, quirks. Captain persona is lighter
+  (smaller prompt, smaller model, smaller anecdote allowance).
+- `Agent.speak(text)` shared interface for HUD bubbles (Deputy, Captain, and even
+  Hero ragdoll-soul utterances per vision §2.3 death treatment); voice TTS wired
+  later.
 - Failure modes and fallbacks (timeout, network down, LLM hallucination, schema
-  violation).
+  violation, archon-disconnect).
 
 **Out of scope:**
 - Schema for `ActionPlan` / `TacticalOrder` (doc 07).
@@ -51,7 +73,7 @@ specified so two deputies feel different.
    ┌──────────────────────────────────────────────────────────────┐
    │ ClassifierRouter                                             │
    │   build snapshot via BattlefieldSnapshotBuilder              │
-   │   pick which deputy to address (or both)                     │
+   │   address the single Deputy (or a specific Captain by id)    │
    │   call DeputyLLMClient.submit_plan(                          │
    │     persona = combat_persona,                                │
    │     memory = combat_memory_snapshot,                         │
@@ -88,7 +110,7 @@ signal spoke(text: String, deputy_id: StringName)
 signal plan_received(plan: ActionPlan)
 signal plan_failed(reason: StringName, details: Dictionary)
 
-@export var deputy_id: StringName            # &"combat" or &"economy"
+@export var deputy_id: StringName            # canonical &"deputy"; the field exists so multi-faction matches address each side's deputy independently (e.g. &"deputy_blue", &"deputy_red")
 @export var persona: DeputyPersona
 
 var memory: DeputyMemory = null
@@ -106,15 +128,15 @@ character-and-validation layer between `ClassifierRouter`'s LLM output and the
 `CommandBus`. Persona-level filtering (allowed type ids, refusal patterns) happens
 in `handle_plan` before forwarding to the bus.
 
-Two `Deputy` instances are added to the scene tree by `bootstrap.gd` (or by an
-autoload `DeputyRegistry` if convenient): one with `deputy_id = &"combat"`, one with
-`deputy_id = &"economy"`. Both are addressed by the same `ClassifierRouter` (which
-holds the single `DeputyLLMClient`) but receive different personas and different
-memories.
+One `Deputy` instance is added to the scene tree per faction by `bootstrap.gd`
+(default single-faction MVP: one `Deputy` with `deputy_id = &"deputy"`). The
+`Deputy` holds a single persona and a single `DeputyMemory`; specialization
+(combat tempo vs economy upkeep vs scouting) lives at the Captain layer below
+(§11.6), not at the Deputy seat itself.
 
 `bootstrap.gd` also subscribes to `MatchState.victory_triggered` /
 `match_lost` (when 09 introduces it) and calls
-`MemoryStore.consolidate_after_match(deputy_id, summary, llm_client)` for each
+`MemoryStore.consolidate_after_match(deputy_id, summary, llm_client)` for the
 deputy at end-of-match — the only cross-match write site.
 
 ## 4. `ClassifierRouter`
@@ -230,7 +252,7 @@ Output shape (every key required, order stable for caching):
     "score": { "buildings_killed": 1, "units_lost": 0 }
   },
   "you": {
-    "deputy_id": "combat",
+    "deputy_id": "deputy",
     "last_plan_id": "plan_42",
     "recent_orders": [
       // last 5 orders this deputy issued, summarized
@@ -343,15 +365,27 @@ extends Resource
 @export var consolidation_model: StringName = &"claude-haiku-4-20251022"
 ```
 
-v1 ships three personas as `.tres`:
-- `combat_veteran.tres` — calm, terse, uses chess metaphors, refuses suicide
-  charges.
-- `combat_aggro.tres` — bold, profane, tolerates losses for tempo.
-- `economy_nerd.tres` — pedantic, optimistic about long-term, suspicious of
-  early aggression.
+v1 ships three Deputy personas as `.tres`. All three fill the **single deputy
+seat** — they're archetype variants of the same role, not specialists for separate
+seats:
+- `deputy_veteran.tres` — calm, terse, uses chess metaphors, refuses suicide
+  charges; balanced economy/military weighting.
+- `deputy_aggro.tres` — bold, profane, tolerates losses for tempo; biases plans
+  toward attack timing windows.
+- `deputy_pedant.tres` — optimistic about long-term, suspicious of early
+  aggression, narrates economy decisions in detail.
 
-Persona is selected at match-start (doc 10's lobby), defaults to `combat_veteran`
-+ `economy_nerd`.
+Persona is selected at match-start (doc 10's lobby), defaults to `deputy_veteran`.
+
+A separate `CaptainPersona` Resource ships with role-specialized presets used by
+captains spawned during a match — these *do* split by specialization:
+- `captain_combat.tres` — squad leader for combat squads.
+- `captain_econ.tres` — overseer for worker groups / depots.
+- `captain_scout.tres` — recon / vision captain.
+
+CaptainPersona shares the schema (name, archetype, voice_style, etc.) but uses
+`preferred_model = &"claude-haiku-4-20251022"` and a tighter prompt template; see
+§11.6.
 
 The system prompt is assembled per-call:
 
@@ -397,6 +431,139 @@ handle_utterance` without changing the interface.
 Every failure path produces a `[RTSMVP] Deputy <id> failure: <kind>` log line and a
 HUD bubble. No silent failures.
 
+## 11.5. Agent ladder summary (vision §2.3 mapping)
+
+08 implements three of the four ladder tiers; 09 owns the fourth.
+
+| Tier | Module(s) in 08 | LLM model class | Memory horizon | Bond surface |
+|---|---|---|---|---|
+| **Hero** | `Agent.speak` only (death-line utterances per §2.3) | none — player-controlled | n/a | direct (player avatar) |
+| **Deputy** | `Deputy`, `MemoryStore`, full `DeputyPersona`, full snapshot | top-tier (Sonnet) | persistent: matches, anecdotes, traits, phrases | long-term, single bond per faction |
+| **Captain** | `Captain`, `CaptainShortTermMemory`, lighter `CaptainPersona`, narrowed snapshot | mid-tier (Haiku or equivalent) | in-match only at v1; cross-match TBD | short-to-medium per vision §2.3 |
+| **Regular** | — (doc 09: behavior trees, no agent layer) | n/a | n/a | none (disposable) |
+
+The shared infrastructure (`ClassifierRouter`, `DeputyLLMClient`,
+`BattlefieldSnapshotBuilder`) parameterizes by agent tier — same code paths, different
+budgets.
+
+## 11.6. Captain (`captain.gd`)
+
+Vision §2.3 calls Captains "smaller LLM agents the player can bond with". They
+spawn during a match as squad leaders for groups of regulars, accept tactical orders
+from the deputy or directly from the player, and make their own micro-decisions
+within those orders.
+
+```gdscript
+class_name Captain
+extends Agent       # shared base with Deputy
+
+@export var captain_id: StringName               # unique within match, e.g. &"alpha"
+@export var persona: CaptainPersona
+@export var squad_id: StringName                 # the squad this captain leads (07 §3 target_squad_id)
+@export var agency_tier: StringName = &"captain" # synced with doc 09's unit definition
+
+var short_term_memory: Array[ActionPlan] = []   # last N plans this match; no persistence at v1
+
+func bind_squad(squad_id: StringName) -> void
+func handle_plan(plan: ActionPlan) -> void
+func tick_observe(snapshot: Dictionary) -> void   # called every K seconds for autonomous decisions
+```
+
+**How Captain calls the LLM:**
+
+A Captain wakes up in two situations:
+1. **Receives an ActionPlan addressed to its `captain_id` or `squad_id`** — same
+   path as Deputy (router routes plan to Captain's `handle_plan`). The Captain
+   may issue sub-orders to its own squad's units via `CommandBus.submit_orders`
+   with `issuer = DEPUTY_COMBAT` (or a future `CAPTAIN_*` issuer; we extend 07's
+   `Issuer` enum when this lands rather than now).
+2. **Periodic tick** — every K seconds (default 8s, configurable per persona),
+   Captain calls `ClassifierRouter` with no utterance and a `tier_hint = &"tactical"`,
+   asking the LLM "anything you want to do, given current state?" The LLM may emit
+   an empty plan (do nothing) or a small plan to react to something.
+
+**Cost containment:**
+
+- Captain uses a smaller model (Haiku-class) per its `CaptainPersona.preferred_model`.
+- Captain's snapshot crops aggressively: only its own squad + enemies in vision range
+  + the deputy's current high-level intent (one-line summary). 500-token ceiling vs
+  Deputy's 2000.
+- Captains are rate-limited: at most one autonomous LLM call per Captain per K
+  seconds, plus one on-demand call when ordered. A faction with 5 Captains running
+  K=8s autonomous = ~37 LLM calls/minute for autonomous + reactive on top. Vision
+  §2.4 names this as a real budget constraint; doc 12 must measure it.
+
+**Captain memory:**
+
+v1 ships with **in-match short-term memory only**. The Captain's last 6 plans plus
+the events that happened around them are kept in RAM and injected into each LLM
+call. No persistence to disk; when the match ends, the Captain's memory is lost.
+
+Vision §2.3 says Captain cross-match memory depth is **TBD by testing**. Sub-doc
+08+1 (or doc 12's testing track) decides:
+- Whether Captains carry a single-line "previous-match-impression" forward.
+- Whether named Captains (recurring story characters) get the full Deputy memory
+  treatment.
+- Whether the player can promote a Captain to Deputy after enough shared matches.
+
+The data model is forward-compatible: `Captain` has a `persistent_memory` slot
+that's null at v1 but can be filled later without changing the call sites.
+
+## 11.7. Archon mode (`archon_controller.gd`)
+
+Vision §2.5: a human player may take the deputy seat. Same faction, same hero,
+same captains — but the LLM that would normally fill the deputy seat is replaced
+by another player typing/speaking commands as if they were the deputy.
+
+```gdscript
+class_name ArchonController
+extends Node
+
+signal archon_attached(deputy_id: StringName, player_id: StringName)
+signal archon_detached(deputy_id: StringName)
+
+func attach(deputy_id: StringName, player_id: StringName) -> void
+    # The named Deputy node disables its LLM path; ClassifierRouter no longer
+    # routes utterances at deputy-seat to the LLM. Instead, ArchonController
+    # exposes a parallel input channel (HUD text input dedicated to the archon)
+    # whose utterances translate via the normal classifier to ActionPlans.
+    # The classifier still runs — it just runs against the archon's typed text,
+    # not against the LLM's autonomous reasoning. Persona is unchanged (the
+    # archon "wears" the persona's voice style).
+
+func detach(deputy_id: StringName) -> void
+    # Re-enables the LLM path. Persona/memory continuity preserved across the
+    # archon session — from the deputy's perspective the archon period is just
+    # a stretch of matches with different "thinking".
+```
+
+**Implications for 07:**
+
+- `CommandBus.submit_plan` accepts plans whose `issuer` is `PLAYER` *with*
+  `deputy = "combat"`. This already works in the schema — no 07 change needed.
+- A new `ArchonControlPolicy` is added to 07's policy set: identical to
+  `FullControl` but **forbids** AI-tier Deputy plans for the seat the archon is
+  attached to. CommandBus rejects them with `&"archon_attached"`.
+- 07's `OrderTypeRegistry` gates which order types each issuer can use; archon
+  inherits the deputy seat's allowed list (no special permissions).
+
+**LLM cost during archon:** the deputy LLM is silent for the seat (zero tokens).
+Captains continue to run normally because they're not at the deputy seat.
+
+**Failure modes:**
+
+| Archon failure | Reaction |
+|---|---|
+| Player drops connection mid-match | `ArchonController.detach()` fires; LLM Deputy resumes from where it was; HUD flashes "副官接管中" |
+| Archon types nothing for >30s | Soft-handoff: LLM Deputy gets a "you're co-piloting" hint and emits suggestion plans the archon can confirm with a single click. Deferred to 08+1. |
+| Two players try to archon the same seat | `attach` rejected with `&"seat_occupied"` |
+
+**v1 implementation scope for archon:** the seat-attach interface and the
+`ArchonControlPolicy` ship; the actual networked second-player input is doc 12
+networking territory and is **deferred**. v1 archon mode is local-only (same
+keyboard, "press F2 to take the seat" debug toggle), enough to validate the
+control-policy plumbing.
+
 ## 12. Boundaries
 
 - **08 ↔ 07:** `Deputy.handle_plan` calls `CommandBus.submit_plan`. Spec 08 imports
@@ -424,9 +591,17 @@ HUD bubble. No silent failures.
 - `godot/scripts/ai/deputy_memory.gd` — Resource
 - `godot/scripts/ai/memory_store.gd` — autoload
 - `godot/scripts/ai/deputy_persona.gd` — Resource
-- `godot/data/personas/combat_veteran.tres`
-- `godot/data/personas/combat_aggro.tres`
-- `godot/data/personas/economy_nerd.tres`
+- `godot/data/personas/deputy_veteran.tres`
+- `godot/data/personas/deputy_aggro.tres`
+- `godot/data/personas/deputy_pedant.tres`
+- `godot/data/personas/captain_combat.tres`
+- `godot/data/personas/captain_econ.tres`
+- `godot/data/personas/captain_scout.tres`
+- `godot/scripts/ai/captain.gd`
+- `godot/scripts/ai/captain_persona.gd`
+- `godot/scripts/ai/archon_controller.gd`
+- `godot/tests/test_captain.gd`
+- `godot/tests/test_archon_controller.gd`
 - `godot/tests/test_classifier_router.gd` — uses `MockClient`
 - `godot/tests/test_deputy.gd` — handle_plan validation, speak signal
 - `godot/tests/test_battlefield_snapshot_builder.gd`
