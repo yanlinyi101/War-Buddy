@@ -72,3 +72,13 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] Right-click on empty ground without a selection — hero target clears (event fell through)
 - [ ] Squad units never lose HP, never die, and have no HP label
 - [ ] In a release build (`--export-release`), the DEV MODE label is absent and drag-box / right-click does nothing to squads
+
+## Command system (any build)
+
+- [ ] Headless boot prints `[RTSMVP] OrderTypeRegistry: registered 5 core types`
+- [ ] Headless boot prints `[RTSMVP] PrePlanRunner loaded N preplans from res://data/preplans` (N may be 0 in v0.3.0)
+- [ ] Headless boot prints `[RTSMVP] PrePlanRunner: notified match_start`
+- [ ] No SCRIPT ERROR / Parse Error lines in the boot output
+- [ ] After a brief run, `user://order_log/<match_id>.plans.ndjson` contains a JSON line for the inline sample plan
+- [ ] All 64 GUT tests pass
+- [ ] Phase C squad puppets and Phase A hero controls still work (regression check)

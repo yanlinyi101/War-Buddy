@@ -2,6 +2,25 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.3.0] — 2026-04-27
+
+### Added
+- **Command-system skeleton** — first concrete implementation of the keystone artifacts in `docs/specs/07-command-system.md`. Skeleton ships even though there is no executor for the orders yet; doc 09 will land that.
+- **`TacticalOrder` Resource** — universal order data class with `to_dict / from_dict` for LLM JSON round-trip; provenance fields (`origin`, `issuer`, `parent_intent_id`, `confidence`, `rationale`) included from day one. Issuer enum aligns with vision §2.4 strict A-chain: `{ PLAYER, DEPUTY, CAPTAIN, SCRIPT }`.
+- **`ActionPlan` Resource** — wraps the LLM-emitted plan-level rationale + confidence + orders[] with `apply_invariants()` and `validate_invariants()` helpers so deputies never silently emit malformed plans.
+- **`OrderTypeRegistry` autoload** — extension point for future entity / economy specs (doc 09) to register order types (`move`, `attack`, `gather`, `train`, etc.) without touching command-system internals.
+- **`CommandBus` autoload** — single ingress with six-step validation (status / unique id / registered type / param shape / control policy / target presence), accepted/rejected split, ring buffers, and append-only ndjson persistence under `user://order_log/<match_id>.{ndjson,rejected.ndjson,plans.ndjson}`.
+- **`ControlPolicy` family** — `FullControl` (default), `HeroOnly`, `AssistMode`, `ArchonControl`. The fourth implements vision §2.5's archon mode by rejecting AI Deputy plans for whichever seat a human has taken.
+- **`PrePlan` + `PrePlanTrigger` Resources** with a small condition DSL (`within_seconds_of_start`, `enemy_count_at_least`, `player_resource_below`).
+- **`PrePlanRunner` Node** with `notify_event(name, payload)` API (intentional stand-in until `EventBus` lands in doc 09). Bootstrap fires `match_start` on boot with one inline sample plan.
+- **Tests** — seven new GUT files (`test_tactical_order`, `test_action_plan`, `test_order_type_registry`, `test_control_policy`, `test_command_bus`, `test_pre_plan`, `test_pre_plan_runner`) bring the total green count to 64.
+
+### Notes
+- Orders sit in `pending` forever in v0.3.0 — that is intentional. Doc 09 (entities / combat / economy) will introduce executors that consume them via the `order_issued` signal.
+- No LLM integration yet; that's doc 08's milestone (v0.4.0 plan).
+- v0.3.0 keeps the v0.2 dev-mode squad selection intact — both systems coexist on the bus side without conflicting.
+- `.tres` pre-plan authoring is deferred to doc 10 (war-room UI). The shipped `data/preplans/` folder is a placeholder; the inline sample plan in `bootstrap.gd` proves the pipeline.
+
 ## [v0.2.0] — 2026-04-26
 
 ### Added
