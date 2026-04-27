@@ -30,7 +30,7 @@ Define the following Godot physics layers (numerical layer indices to be assigne
 | `friendly_structure` | future friendly buildings + construction ghosts | hard wall, navigation obstacle |
 | `enemy_structure` | enemy buildings (current MVP target) | hard wall, navigation obstacle |
 | `corpse` | ragdoll bodies of dead units | soft-collide, pushable |
-| `soul` | floating soul VFX for hero/deputy/captain deaths | no collision |
+| `soul` | floating soul VFX for hero/captain deaths (deputy is off-field, not eligible) | no collision |
 | `attack_hitbox_player` | melee/projectile volumes spawned by friendlies | passes through self side |
 | `attack_hitbox_enemy` | enemy attack volumes | detects hero but does not block movement |
 | `cursor_pick` | mouse-ray pickable targets | high-priority selection |
@@ -66,16 +66,18 @@ Subjective intent: prevent the player from accidentally pathing through their ow
 
 ## 3. Death and Corpse Handling
 
-All units, when killed, leave a **ragdoll corpse** with a "Human Fall Flat" jelly-physics aesthetic. Corpses are on the `corpse` layer: soft-collide, pushable by any moving unit, no nav-blocking.
+All on-field units, when killed, leave a **ragdoll corpse** with a "Human Fall Flat" jelly-physics aesthetic. Corpses are on the `corpse` layer: soft-collide, pushable by any moving unit, no nav-blocking.
 
-Additionally, units of `agency_tier ∈ {hero, deputy, captain}` (see 06 §2.3 and 09's `agency_tier` field) spawn a **floating soul** VFX on the `soul` layer: no collision, drifts upward, fades over a few seconds.
+Additionally, on-field units of `agency_tier ∈ {hero, captain}` (see 06 §2.3 and 09's `agency_tier` field) spawn a **floating soul** VFX on the `soul` layer: no collision, drifts upward, fades over a few seconds.
 
-| agency_tier | Ragdoll corpse | Floating soul |
-|---|---|---|
-| hero | yes | yes |
-| deputy | yes | yes |
-| captain | yes | yes |
-| regular | yes | no |
+The **deputy is not on the field** (06 §2.3) and is therefore not part of the corpse / soul pipeline at all. It has no collision body, no HP bar, and no death state. Its in-match presence is a HUD portrait + voice — see 06 §8 open question for the visual treatment, deferred to a later UX pass.
+
+| agency_tier | On-field? | Ragdoll corpse | Floating soul |
+|---|---|---|---|
+| hero | yes | yes | yes |
+| deputy | **no** | n/a | n/a |
+| captain | yes | yes | yes |
+| regular | yes | yes | no |
 
 Subjective intent:
 

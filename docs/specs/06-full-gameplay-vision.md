@@ -32,16 +32,18 @@ Implication: command latency, cost, and unpredictability of LLM inference are fi
 
 The faction is not "player + AI tool". It is a four-tier ladder of agency, with player emotional investment scaling alongside it:
 
-| Tier | Agency | Player relationship | Death treatment |
-|---|---|---|---|
-| **Hero** | Player-controlled directly | Player avatar | Ragdoll corpse + floating soul |
-| **Deputy** (副官) | Top-tier LLM agent, embodied on the field as a unit | Long-term bond, full cross-match memory | Ragdoll corpse + floating soul |
-| **Captain** (小队长) | Smaller LLM agent, embodied unit | Short-to-medium bond; memory depth tuned by testing (TBD doc 08) | Ragdoll corpse + floating soul |
-| **Regular unit** | Behavior-tree script, no agency | Disposable | Ragdoll corpse only |
+| Tier | Agency | Embodiment | Player relationship | Death treatment |
+|---|---|---|---|---|
+| **Hero** | Player-controlled directly | On-field unit | Player avatar | Ragdoll corpse + floating soul |
+| **Deputy** (副官) | Top-tier LLM agent | **Off-field** — HUD portrait + voice, no attackable entity | Long-term bond, full cross-match memory | **Cannot die or be attacked** |
+| **Captain** (小队长) | Smaller LLM agent | On-field unit | Cross-match memory + modest stat reinforcement (capped at ~15% per axis) | Ragdoll corpse + floating soul |
+| **Regular unit** | Behavior-tree script, no agency | On-field unit | Disposable | Ragdoll corpse only |
 
-A deputy that forgets the player between matches breaks the pillar. A deputy that never fails also breaks the pillar. Captains are a *new* deliberate design: they extend the bond surface area beyond the single deputy, while their lighter agent footprint keeps the system affordable.
+A deputy that forgets the player between matches breaks the pillar. A deputy that never makes mistakes — strategic misreads, mishandling a captain's report, choosing the wrong pre-plan under pressure — also breaks the pillar: the player cannot bond with an oracle. **Failure surface is cognitive, not physical**: the deputy commands from off-field and cannot be killed. The risk the player feels is "is my deputy understanding me right now," not "is my deputy about to be focus-fired."
 
-Implication: doc 08 covers the **whole agent ladder**, not just the deputy. Doc 09 must carry an `agency_tier` field on every unit definition. Doc 11 uses agency tier to gate visual feedback like the soul effect.
+Captains are deliberately a *small* design, not a vassal/court subsystem: their entire mechanical surface is **persistent memory + ≤15% stat reinforcement per axis + full mortality**. The player's bond grows from those three mechanics alone — no recruitment quests, no loyalty politics, no marriage trees. Keep it small; let the LLM personality do the rest.
+
+Implication: doc 08 covers the **whole agent ladder**, not just the deputy. Doc 09 must carry an `agency_tier` field on every unit definition. Doc 11 uses agency tier to gate visual feedback like the soul effect — and explicitly excludes the deputy from the on-field collision and corpse pipelines.
 
 ### 2.4 Three-Tier Command System
 
@@ -54,6 +56,8 @@ Commands enter the system at one of three layers, each with a different executio
 | **Strategic intent** (战略意图) | In-match voice | LLM planner → decomposes into tactical orders → behavior tree | High | Bounded by LLM |
 
 The three tiers share **one tactical-order schema** as their common substrate. Pre-plans serialize to it directly; the LLM planner emits it; the behavior tree consumes it. This shared schema is the most important artifact in doc 07.
+
+**Command chain is strict (A-chain).** All in-match commands address **the deputy**. The deputy decomposes complex orders into per-captain instructions through the same tactical-order schema, making the deputy↔captain channel a structurally identical inner loop. Pre-plans are authored in the war room with explicit role / captain / grid references; at runtime they are invoked on the deputy and the deputy fans out to its captains. The commander never bypasses the deputy in-match. Captains never receive direct commands from the player; their relationship with the player lives in their persistent memory and post-match consequences (§2.3), not in a tactical addressing channel.
 
 ### 2.5 Hybrid Deputy Modes: AI Primary, Human Archon Secondary
 
@@ -95,9 +99,9 @@ What is fixed at the vision level: *whatever a match looks like, the commander a
 
 ### In scope for the full game (covered across 07–12, built incrementally)
 
-- One commander + one hero + one deputy seat (AI or human)
-- Captains as smaller in-match LLM agents the player can bond with
-- Approximate force size: ~50 units per faction (1 hero + 1 deputy + N captains + regulars)
+- One commander + one hero + one deputy seat (AI or human, off-field)
+- Captains as smaller in-match LLM agents with persistent memory, ≤15% stat reinforcement, and full mortality — no further vassal mechanics
+- Approximate force size: ~50 units per faction (1 hero + N captains + regulars; deputy is off-field and not counted)
 - Voice as primary command channel
 - Three-tier command system with shared tactical schema
 - Persistent AI deputy identity across matches; captain memory depth tuned by testing
@@ -112,6 +116,9 @@ What is fixed at the vision level: *whatever a match looks like, the commander a
 - Commander framing/micro-ing arbitrary units (only the hero is directly controlled)
 - AI deputy without persistent identity ("forgets the player every match")
 - Collapsing the agent ladder back to a single tier (deputy = captain = regular)
+- Commander addressing captains directly in-match (must always route through the deputy)
+- Vassal / court / loyalty / recruitment subsystems for captains beyond the three mechanics in §2.3
+- Deputy as an on-field attackable entity (deputy cannot die, cannot be focus-fired, has no HP bar)
 - Replacing voice with hotkey-driven command shells in the shipped product
 - Mocked/scripted deputies sold as AI in shipped builds (MVP-only allowance)
 
@@ -151,6 +158,8 @@ The following are deliberately not answered in 06 and will be resolved in the na
 - **What does the LLM planner's tool-calling contract look like?** → 08
 - **How does the deputy remember the player across matches, and what does it remember?** → 08
 - **What is a captain's memory depth, and does it persist across matches or only within one?** → 08 (tuned by testing)
+- **What axes of stat reinforcement do captains gain, and how does the ≤15% cap distribute?** → 09
+- **How is the off-field deputy represented in HUD — portrait, voice-only, animated bust, etc.?** → 11 or future UX doc
 - **What units, buildings, resources exist in v1?** → 09
 - **What is a match's win condition and length?** → 09
 - **How is the war-room pre-plan editor structured?** → 10

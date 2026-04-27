@@ -32,7 +32,7 @@
 | `friendly_structure` | 未来的己方建筑 + 施工 ghost | 硬墙、寻路阻挡 |
 | `enemy_structure` | 敌方建筑（当前 MVP 目标） | 硬墙、寻路阻挡 |
 | `corpse` | 死亡单位的 ragdoll 尸体 | 软碰撞、可推 |
-| `soul` | 英雄/副官/小队长死亡的漂浮灵魂 VFX | 无碰撞 |
+| `soul` | 英雄 / 小队长死亡的漂浮灵魂 VFX（副官在场外，不参与） | 无碰撞 |
 | `attack_hitbox_player` | 己方触发的近战/弹道命中体 | 穿过自己一方 |
 | `attack_hitbox_enemy` | 敌方攻击命中体 | 检测英雄但不阻挡移动 |
 | `cursor_pick` | 鼠标射线可拾取目标 | 高优先级选中 |
@@ -68,16 +68,18 @@
 
 ## 3. 死亡与尸体处理
 
-所有单位死亡都留下 **ragdoll 尸体**，"Human Fall Flat 果冻物理"风格。尸体在 `corpse` 图层：软碰撞、可被任何移动单位推开、不阻挡寻路。
+所有**场上**单位死亡都留下 **ragdoll 尸体**，"Human Fall Flat 果冻物理"风格。尸体在 `corpse` 图层：软碰撞、可被任何移动单位推开、不阻挡寻路。
 
-此外，`agency_tier ∈ {hero, deputy, captain}` 的单位（见 06 §2.3 与 09 的 `agency_tier` 字段）死亡时额外生成**漂浮灵魂** VFX，在 `soul` 图层：无碰撞、向上漂浮、数秒内淡出。
+此外，`agency_tier ∈ {hero, captain}` 的场上单位（见 06 §2.3 与 09 的 `agency_tier` 字段）死亡时额外生成**漂浮灵魂** VFX，在 `soul` 图层：无碰撞、向上漂浮、数秒内淡出。
 
-| agency_tier | Ragdoll 尸体 | 漂浮灵魂 |
-|---|---|---|
-| hero | 是 | 是 |
-| deputy | 是 | 是 |
-| captain | 是 | 是 |
-| regular | 是 | 否 |
+**副官不在场上**（06 §2.3），因此完全不参与尸体 / 灵魂管线。它没有碰撞体、没有 HP 条、没有死亡状态。局内表现形式是 HUD 头像 + 语音——视觉处理详见 06 §8 开放问题，延后到后续 UX 文档。
+
+| agency_tier | 是否在场上 | Ragdoll 尸体 | 漂浮灵魂 |
+|---|---|---|---|
+| hero | 是 | 是 | 是 |
+| deputy | **否** | n/a | n/a |
+| captain | 是 | 是 | 是 |
+| regular | 是 | 是 | 否 |
 
 **主观意图**：
 
