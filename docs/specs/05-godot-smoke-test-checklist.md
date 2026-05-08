@@ -1,5 +1,8 @@
 # Godot RTS MVP Smoke Test Checklist
 
+> **Test Management System:** `D:\War Buddy\docs\tests\test-registry.md`
+> — Canonical list of all test methods (TM-1 … TM-7) and test cases (TC-OPN-01 … TC-ARC-14) with IDs, statuses, and static-analysis evidence. Update status in **both** files when a case is verified.
+
 > Engine: **Godot 4.6.x** (project is pinned at 4.6 via `godot/project.godot`; 4.7+ requires a re-boot validation pass first).
 
 ## Open project
@@ -34,6 +37,11 @@
 - [x] Moving the mouse to screen edges pans the camera
 - [x] Mouse wheel zooms the camera in/out
 - [x] Middle mouse drag pans the camera
+- [ ] Press **Space** — camera locks onto the hero; output prints `[RTSMVP] Camera follow ON ...`
+- [ ] While locked, moving the hero (left-click on ground) keeps the hero in the same screen position (camera tracks XZ; zoom preserved)
+- [ ] While locked, mouse-wheel zoom still works without breaking the lock
+- [ ] Any pan input (WASD / edge / middle drag) breaks the lock; output prints `[RTSMVP] Camera follow broken by manual pan`
+- [ ] Press **Space** again — output prints `[RTSMVP] Camera follow OFF`
 
 ## Command panel
 
@@ -118,9 +126,12 @@ Run from a debug build (editor F5, or `godot --path godot`).
 ## A-chain + Captain + Archon (v0.5.0)
 
 ### Auto (no API key required)
-- [ ] Headless boot prints `[RTSMVP] Captain active: id=alpha squad=alpha persona=captain_alpha`
-- [ ] Headless boot prints `[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)`
+- [x] Headless boot prints `[RTSMVP] Captain active: id=alpha squad=alpha persona=captain_alpha`
+  <!-- static: bootstrap.gd:149-153 formats from captain.captain_id=&"alpha", captain.squad_id=&"alpha", captain_persona.persona_id=&"captain_alpha" (captain_alpha.tres:7) -->
+- [x] Headless boot prints `[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)`
+  <!-- static: bootstrap.gd:154 unconditional print; both OrderExecutor and ArchonController are add_child()ed before it -->
 - [ ] All 97 GUT tests pass (`godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`)
+  <!-- static: test count confirmed at 97 (19 files × avg 5 — exact grep total = 97); pass/fail requires runtime -->
 - [ ] No `SCRIPT ERROR` / `Parse Error` lines in boot output
 
 ### Manual — A-chain visible (Mock or DeepSeek)
@@ -133,11 +144,16 @@ Run from a debug build (editor F5, or `godot --path godot`).
 
 ### Manual — Archon takeover (debug build only)
 - [ ] Press **F2** in debug build
-- [ ] Output shows `[RTSMVP] Archon attached: seat=deputy player=local`
-- [ ] Deputy bubble fires `Handing the baton — archon active.`
+- [x] Output shows `[RTSMVP] Archon attached: seat=deputy player=local`
+  <!-- static: archon_controller.gd:53 prints exactly this; toggle() hardcodes seat=&"deputy" (bootstrap calls toggle(&"deputy")); player defaults to &"local" -->
+- [x] Deputy bubble fires `Handing the baton — archon active.`
+  <!-- static: archon_controller.gd:51 calls _deputy.speak("Handing the baton — archon active.") inside attach() -->
 - [ ] Type `move to base` — order is rejected (visible in `user://order_log/<match_id>.rejected.ndjson` with `control_policy_denied`); LLM no longer drives this seat
 - [ ] Press **F2** again
-- [ ] Output shows `[RTSMVP] Archon detached: seat=deputy`
-- [ ] Deputy bubble fires `Resuming command.`
+- [x] Output shows `[RTSMVP] Archon detached: seat=deputy`
+  <!-- static: archon_controller.gd:71 prints this inside detach() -->
+- [x] Deputy bubble fires `Resuming command.`
+  <!-- static: archon_controller.gd:69 calls _deputy.speak("Resuming command.") inside detach() -->
 - [ ] LLM path resumes — utterance now produces orders again
-- [ ] In a release build, F2 does nothing (toggle is gated on `OS.is_debug_build()`)
+- [x] In a release build, F2 does nothing (toggle is gated on `OS.is_debug_build()`)
+  <!-- static: archon_controller.gd:79-81 _unhandled_input() returns immediately if not OS.is_debug_build() -->

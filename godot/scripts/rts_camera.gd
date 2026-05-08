@@ -12,7 +12,25 @@ class_name RtsCamera
 
 var _dragging := false
 
+# --- Hero-follow mode (Space toggles) -------------------------------------
+# Locks the camera to the hero's XZ position while preserving the current
+# camera offset, so the user's chosen pan + zoom feel carries over. Zoom
+# still works in follow mode; any pan input (WASD, edge-pan, middle drag)
+# breaks the lock — LoL-style "Y to lock / move to break" UX.
+var _follow_target: Node3D = null
+var _follow_enabled: bool = false
+var _follow_offset: Vector3 = Vector3.ZERO   # camera.global_position - target.global_position at lock time
+
+func set_follow_target(target: Node3D) -> void:
+	_follow_target = target
+
+func is_following() -> bool:
+	return _follow_enabled and _follow_target != null
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("camera_follow_toggle"):
+		_toggle_follow()
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_MIDDLE:
 			_dragging = event.pressed
@@ -21,6 +39,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_adjust_zoom(zoom_step)
 	elif event is InputEventMouseMotion and _dragging:
+		_break_follow_if_active()
 		global_position += Vector3(-event.relative.x * drag_pan_speed, 0.0, -event.relative.y * drag_pan_speed)
 		_clamp_to_bounds()
 
@@ -47,9 +66,46 @@ func _process(delta: float) -> void:
 		move.z += 1.0
 
 	if move != Vector3.ZERO:
+		_break_follow_if_active()
 		move = move.normalized() * pan_speed * delta
 		global_position += Vector3(move.x, 0.0, move.z)
 		_clamp_to_bounds()
+	else:
+		_apply_follow()
+
+func _apply_follow() -> void:
+	if not is_following():
+		return
+	# Pin to hero (XZ only — preserve camera height + zoom).
+	var target_pos := _follow_target.global_position
+	global_position = Vector3(
+		target_pos.x + _follow_offset.x,
+		global_position.y,
+		target_pos.z + _follow_offset.z,
+	)
+	_clamp_to_bounds()
+
+func _toggle_follow() -> void:
+	if _follow_target == null:
+		return
+	if _follow_enabled:
+		_follow_enabled = false
+		print("[RTSMVP] Camera follow OFF")
+		return
+	# Lock — capture current offset on the XZ plane so the player's chosen
+	# framing carries over instead of snapping the hero to dead-center.
+	_follow_offset = Vector3(
+		global_position.x - _follow_target.global_position.x,
+		0.0,
+		global_position.z - _follow_target.global_position.z,
+	)
+	_follow_enabled = true
+	print("[RTSMVP] Camera follow ON (target=%s offset=%s)" % [_follow_target.name, _follow_offset])
+
+func _break_follow_if_active() -> void:
+	if _follow_enabled:
+		_follow_enabled = false
+		print("[RTSMVP] Camera follow broken by manual pan")
 
 func _adjust_zoom(amount: float) -> void:
 	if projection == PROJECTION_ORTHOGONAL:

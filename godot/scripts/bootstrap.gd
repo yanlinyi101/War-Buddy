@@ -23,6 +23,7 @@ const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
 @onready var hero = $World/CommanderHero
 @onready var hud = $HudRoot
 @onready var navigation_region: NavigationRegion3D = $World/NavigationRegion3D
+@onready var rts_camera: Camera3D = $World/Camera3D
 
 var command_log = null
 var match_state = null
@@ -56,6 +57,10 @@ func _ready() -> void:
 
 	if navigation_region != null:
 		navigation_region.bake_navigation_mesh(false)
+
+	# Bind hero as the camera follow target (Space toggles follow mode).
+	if rts_camera != null and rts_camera.has_method("set_follow_target"):
+		rts_camera.set_follow_target(hero)
 
 	hud.bind_hero_state(hero.hero_state)
 	hud.command_submitted.connect(_on_command_submitted)

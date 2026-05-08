@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.5.1] — 2026-05-08
+
+### Added
+- **Hero-follow camera** — pressing **Space** locks the RTS camera onto the hero, preserving the player's current pan offset and zoom (no jarring snap-to-center). Mouse-wheel zoom continues to work in follow mode. Any manual pan (WASD / edge-pan / middle-drag) breaks the lock automatically — LoL-style "Y to lock / move to break" UX. Press Space again to toggle off.
+- New input action `camera_follow_toggle` (Space) registered in `project.godot`.
+- `RtsCamera.set_follow_target(target)` / `is_following()` / internal `_apply_follow()` API; bootstrap binds the hero as the follow target on `_ready`.
+- Tests — 4 new GUT cases in `test_rts_camera_follow.gd`. Total green count: **101/101**.
+
+### Notes
+- Follow mode is XZ-only; the camera's Y (zoom level) is never overwritten by the hero's Y, so the player's chosen zoom always wins.
+- Edge-pan triggered by mouse at the screen border still breaks follow — that's intentional. If the player wants to look elsewhere with the mouse alone, they should briefly leave follow mode.
+
 ## [v0.5.0] — 2026-05-08
 
 ### Added
