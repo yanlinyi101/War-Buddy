@@ -15,6 +15,9 @@ const MockClientScript = preload("res://scripts/ai/mock_client.gd")
 const DeepseekClientScript = preload("res://scripts/ai/deepseek_client.gd")
 const AnthropicClientScript = preload("res://scripts/ai/anthropic_client.gd")
 const SnapshotBuilderScript = preload("res://scripts/ai/battlefield_snapshot_builder.gd")
+const OrderExecutorScript = preload("res://scripts/command/order_executor.gd")
+const CaptainScript = preload("res://scripts/ai/captain.gd")
+const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -30,6 +33,9 @@ var deputy = null
 var classifier_router = null
 var snapshot_builder = null
 var llm_client: RefCounted = null
+var order_executor = null
+var captain = null
+var archon_controller = null
 
 func _ready() -> void:
 	_register_core_order_types()
@@ -114,6 +120,39 @@ func _ready() -> void:
 		_llm_kind_name(llm_client),
 	])
 
+	# --- v0.5.0: Order executor + Captain + Archon ---
+	order_executor = OrderExecutorScript.new()
+	order_executor.name = "OrderExecutor"
+	add_child(order_executor)
+	order_executor.bind_bus(CommandBus)
+
+	var captain_persona: Resource = load("res://data/personas/captain_alpha.tres")
+	captain = CaptainScript.new()
+	captain.name = "CaptainAlpha"
+	captain.captain_id = &"alpha"
+	captain.squad_id = &"alpha"
+	captain.persona = captain_persona
+	captain.bind_command_bus(CommandBus)
+	captain.bind_memory(MemoryStore.load_captain(&"captain_alpha"))
+	add_child(captain)
+	captain.spoke.connect(_on_captain_spoke)
+	# Route Deputy plans through the Captain. CommandBus.plan_issued fires
+	# after the deputy's submit_plan is accepted; we dispatch the plan to
+	# the captain whose squad is addressed (single captain at v0.5.0).
+	CommandBus.plan_issued.connect(_on_plan_issued_route_to_captain)
+
+	archon_controller = ArchonControllerScript.new()
+	archon_controller.name = "ArchonController"
+	archon_controller.bind(CommandBus, deputy)
+	add_child(archon_controller)
+
+	print("[RTSMVP] Captain active: id=%s squad=%s persona=%s" % [
+		String(captain.captain_id),
+		String(captain.squad_id),
+		String(captain_persona.persona_id) if captain_persona != null else "<none>",
+	])
+	print("[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)")
+
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
 		match_state.register_enemy_building(node)
@@ -148,6 +187,9 @@ func _spawn_squad_units() -> void:
 		unit.unit_id = "squad_%s" % char(97 + i)  # squad_a, squad_b, squad_c
 		unit.position = hero.global_position + offsets[i]
 		world.add_child(unit)
+		# Group convention for OrderExecutor lookup (spec 08 §11.6: captain
+		# leads `squad_id=alpha`).
+		unit.add_to_group("squad_alpha")
 
 func _register_core_order_types() -> void:
 	var defs = [
@@ -203,6 +245,26 @@ func _on_deputy_spoke(text: String, deputy_id: StringName) -> void:
 	if hud != null and hud.has_method("show_deputy_bubble"):
 		hud.show_deputy_bubble(text, deputy_id)
 	print("[RTSMVP] Deputy %s: %s" % [String(deputy_id), text])
+
+func _on_captain_spoke(text: String, captain_id: StringName) -> void:
+	if hud != null and hud.has_method("show_deputy_bubble"):
+		hud.show_deputy_bubble("[%s] %s" % [String(captain_id), text], captain_id)
+	print("[RTSMVP] Captain %s: %s" % [String(captain_id), text])
+
+func _on_plan_issued_route_to_captain(plan: Resource) -> void:
+	if plan == null or captain == null:
+		return
+	# v0.5.0 single-captain routing: forward any plan whose orders address
+	# this captain's squad (or carry no targeting — captain claims it as a
+	# default squad assignment). Plans purely for the hero are skipped.
+	var hero_only := true
+	for o in plan.orders:
+		if o.target_kind != TacticalOrder.TARGET_KIND_HERO:
+			hero_only = false
+			break
+	if hero_only:
+		return
+	captain.handle_plan(plan)
 
 func _make_sample_match_start_plan() -> Resource:
 	var trigger = PrePlanScript.PrePlanTrigger.new()

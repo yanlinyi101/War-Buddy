@@ -114,3 +114,30 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] Unset `DEEPSEEK_API_KEY`, set `ANTHROPIC_API_KEY`, then F5
 - [ ] Boot prints `llm=AnthropicClient`
 - [ ] Same utterance behavior as DeepSeek section
+
+## A-chain + Captain + Archon (v0.5.0)
+
+### Auto (no API key required)
+- [ ] Headless boot prints `[RTSMVP] Captain active: id=alpha squad=alpha persona=captain_alpha`
+- [ ] Headless boot prints `[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)`
+- [ ] All 97 GUT tests pass (`godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`)
+- [ ] No `SCRIPT ERROR` / `Parse Error` lines in boot output
+
+### Manual — A-chain visible (Mock or DeepSeek)
+- [ ] In editor F5: type `move to mid` in command panel and submit
+- [ ] Deputy bubble appears at bottom-center (existing v0.4.0 behavior)
+- [ ] **A captain bubble follows shortly after**, e.g. `[alpha] Captain alpha, moving.`
+- [ ] **The 3 blue squad capsules actually move** in response (this is the v0.5.0 closure — orders no longer sit in `pending`)
+- [ ] Output log shows `[RTSMVP] SquadUnit squad_a ordered move ...` etc. for all 3 units
+- [ ] Type `focus fire on EnemyBuildingA` — squad capsules walk to and attack the target building
+
+### Manual — Archon takeover (debug build only)
+- [ ] Press **F2** in debug build
+- [ ] Output shows `[RTSMVP] Archon attached: seat=deputy player=local`
+- [ ] Deputy bubble fires `Handing the baton — archon active.`
+- [ ] Type `move to base` — order is rejected (visible in `user://order_log/<match_id>.rejected.ndjson` with `control_policy_denied`); LLM no longer drives this seat
+- [ ] Press **F2** again
+- [ ] Output shows `[RTSMVP] Archon detached: seat=deputy`
+- [ ] Deputy bubble fires `Resuming command.`
+- [ ] LLM path resumes — utterance now produces orders again
+- [ ] In a release build, F2 does nothing (toggle is gated on `OS.is_debug_build()`)

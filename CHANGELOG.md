@@ -2,6 +2,26 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.5.0] — 2026-05-08
+
+### Added
+- **A-chain finally closes** — `OrderExecutor` listens on `CommandBus.order_issued` and translates accepted `move` / `attack` / `stop` / `hold` orders into the existing `SquadUnit.order_*` calls. Plans the deputy emits now actually move units. (Minimal stub for doc 09 territory; the full executor + behavior tree still lands with 09.)
+- **Captain layer (spec 08 §11.6, vision §2.3)** — `Captain` Node + `CaptainPersona` + `CaptainMemory` + `data/personas/captain_alpha.tres`. One captain (`alpha`) is bound to the existing 3 SquadUnits via the new `squad_alpha` group. Captain receives Deputy plans through `CommandBus.plan_issued`, persona-filters, retags orders to its squad, and resubmits as `issuer = CAPTAIN`. `OrderExecutor` skips DEPUTY-issued orders so the same physical action isn't double-executed — the strict A-chain (player → deputy → captain → squad units) is now load-bearing.
+- **`CaptainMemory`** — cross-match persistence at `user://captains/<persona_id>.json` with the ≤15 % per-axis reinforcement clamp enforced at write time (the cap lives in 08, not in 09). `MemoryStore` gains `load_captain` / `save_captain` / `snapshot_captain_for`.
+- **`ArchonController` (spec 08 §11.7)** — `attach(seat, player)` swaps the `CommandBus` policy to `ArchonControlPolicy(seat)` (already in 07), silencing AI Deputy plans for that seat while leaving `PLAYER`-issued plans accepted. `detach()` restores the prior policy. F2 toggles attach/detach in debug builds; release builds ignore the toggle. Networked second-player input is still doc 12 territory and remains deferred.
+- **HUD captain bubble** — `Captain.spoke` is wired into the same `MessageBubbleHud` channel the deputy uses, prefixed by the captain id so it's visually distinguishable.
+- **Tests** — 15 new GUT cases (`test_order_executor`, `test_captain`, `test_archon_controller`) bring total green count to **97/97**.
+
+### Changed
+- `bootstrap.gd::_spawn_squad_units` adds spawned `SquadUnit` nodes to the `squad_alpha` scene-tree group so `OrderExecutor._resolve_units` can find them by `target_squad_id`.
+- `OrderExecutor` skips orders whose `issuer == DEPUTY` (intent-only) and orders whose `target_kind == hero` (owned by `hero_controller`). This is the rule that lets deputy plans flow through a captain without double-execution.
+
+### Notes
+- Captain still does **not** make autonomous LLM calls — `tick_observe` is a no-op at v0.5.0. Periodic K-second snapshot calls land alongside doc 09 (we want a real `EventBus` and combat HP feed first; without those the captain has nothing useful to react to).
+- LLM-driven sub-order decomposition inside Captain is still a passthrough (re-tags but does not split or reorder). Real LLM inside Captain is gated on cost-budget telemetry per spec 08 §15 / vision §2.4.
+- Stat reinforcement (`CaptainMemory.reinforcement_pct`) is plumbed but not yet read at unit-spawn time; that seam is doc 09's responsibility per spec 08 §11.6.
+- 05 smoke checklist gains a v0.5.0 section covering: A-chain visible, captain bubble appears, F2 archon toggle blocks AI deputy.
+
 ## [v0.4.1] — 2026-04-27
 
 ### Changed
