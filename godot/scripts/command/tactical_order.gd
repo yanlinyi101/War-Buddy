@@ -157,8 +157,8 @@ static func from_dict(d: Dictionary) -> TacticalOrder:
 	var o := TacticalOrder.new()
 	o.id = StringName(d.get("id", ""))
 	o.type_id = StringName(d.get("type_id", ""))
-	o.origin = int(d.get("origin", Origin.SCRIPT))
-	o.issuer = int(d.get("issuer", Issuer.PLAYER))
+	o.origin = int(d.get("origin", Origin.SCRIPT)) as Origin
+	o.issuer = int(d.get("issuer", Issuer.PLAYER)) as Issuer
 	o.deputy = StringName(d.get("deputy", ""))
 	o.target_kind = StringName(d.get("target_kind", ""))
 	var raw_uids: Array = d.get("target_unit_ids", [])

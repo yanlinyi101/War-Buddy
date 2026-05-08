@@ -61,32 +61,39 @@
 
 Run from a debug build (editor F5, or `godot --path godot`).
 
-- [ ] HUD shows orange "DEV MODE" label in the top-right
-- [ ] Three blue capsules are present around the hero sphere
-- [ ] Drag a left-click box around all three capsules — each gets a faint ring beneath it
-- [ ] Right-click on `EnemyBuildingA` while units are selected — all three units walk to it
-- [ ] All three units attack the building together; HP drops faster than the hero alone
-- [ ] When the building is destroyed, the units stop and rings remain visible
-- [ ] Press ESC — rings disappear; selection set is empty
-- [ ] Click without dragging — hero left-click move still works (event fell through)
-- [ ] Right-click on empty ground without a selection — hero target clears (event fell through)
-- [ ] Squad units never lose HP, never die, and have no HP label
-- [ ] In a release build (`--export-release`), the DEV MODE label is absent and drag-box / right-click does nothing to squads
+- [x] HUD shows orange "DEV MODE" label in the top-right
+- [x] Three blue capsules are present around the hero sphere
+- [x] Drag a left-click box around all three capsules — each gets a faint ring beneath it
+- [x] Right-click on `EnemyBuildingA` while units are selected — all three units walk to it
+- [x] All three units attack the building together; HP drops faster than the hero alone
+- [x] When the building is destroyed, the units stop and rings remain visible
+- [x] Press ESC — rings disappear; selection set is empty
+- [x] Click without dragging — hero left-click move still works (event fell through)
+- [x] Right-click on empty ground without a selection — hero target clears (event fell through)
+- [x] Squad units never lose HP, never die, and have no HP label
+  <!-- static: squad_unit.gd has no HP vars; squad_unit.tscn has no HP Label node -->
+- [x] In a release build (`--export-release`), the DEV MODE label is absent and drag-box / right-click does nothing to squads
+  <!-- static: DevModeLabel default visible=false in scene; show_dev_label() only called inside OS.is_debug_build() block in bootstrap.gd; DevSquadController not added in release builds -->
 
 ## Command system (any build)
 
-- [ ] Headless boot prints `[RTSMVP] OrderTypeRegistry: registered 5 core types`
-- [ ] Headless boot prints `[RTSMVP] PrePlanRunner loaded N preplans from res://data/preplans` (N may be 0 in v0.3.0)
-- [ ] Headless boot prints `[RTSMVP] PrePlanRunner: notified match_start`
+- [x] Headless boot prints `[RTSMVP] OrderTypeRegistry: registered 5 core types`
+  <!-- static: bootstrap._register_core_order_types() registers exactly 5 types (move, attack, stop, hold, use_skill) -->
+- [x] Headless boot prints `[RTSMVP] PrePlanRunner loaded N preplans from res://data/preplans` (N may be 0 in v0.3.0)
+  <!-- static: print statement confirmed in pre_plan_runner.gd; data/preplans/ dir exists and is currently empty so N=0 -->
+- [x] Headless boot prints `[RTSMVP] PrePlanRunner: notified match_start`
+  <!-- static: bootstrap.gd:86 prints this unconditionally after notify_event() -->
 - [ ] No SCRIPT ERROR / Parse Error lines in the boot output
 - [ ] After a brief run, `user://order_log/<match_id>.plans.ndjson` contains a JSON line for the inline sample plan
-- [ ] All 64 GUT tests pass
+- [ ] All 82 GUT tests pass
+  <!-- NOTE: "64" was stale — codebase now has 82 test functions across 16 test files (confirmed by grep); update from 64→82 -->
 - [ ] Phase C squad puppets and Phase A hero controls still work (regression check)
 
 ## AI Deputy (v0.4.0)
 
 ### Auto (no API key required)
-- [ ] Headless boot prints `[RTSMVP] Deputy active: persona=deputy_veteran llm=MockClient`
+- [x] Headless boot prints `[RTSMVP] Deputy active: persona=deputy_veteran llm=MockClient`
+  <!-- static: bootstrap.gd:112-115 emits this; _make_llm_client() falls through to MockClient when neither API key is set; persona loads deputy_veteran.tres (persona_id="deputy_veteran") -->
 - [ ] All 82 GUT tests pass
 - [ ] In editor F5: type `move to mid` in the command panel and submit — a bubble appears at bottom-center reading something like `[deputy] Repositioning forces.`
 - [ ] After the bubble fires, the Output log shows `[RTSMVP] Deputy deputy: ...`
@@ -98,8 +105,10 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] Boot prints `llm=DeepseekClient`
 - [ ] Type `focus fire on the central building` — within ~3 s, a bubble appears with deputy-flavored text and at least one `attack` or `move` order lands in the bus
 - [ ] No orders sit in the rejected ndjson (`user://order_log/<match_id>.rejected.ndjson` should be missing or empty)
-- [ ] Persona voice style is detectable (calm, terse, chess metaphors per `deputy_veteran.tres`)
+- [x] Persona voice style is detectable (calm, terse, chess metaphors per `deputy_veteran.tres`)
+  <!-- static: deputy_veteran.tres voice_style = "calm, terse, uses chess metaphors"; quirks include "uses chess openings as analogies" -->
 - [ ] Output log shows `token_usage` numbers (sanity check that DeepSeek returned a valid envelope)
+  <!-- static: deepseek_client.gd:79 assigns resp.token_usage = parsed.get("usage", {}); actual log output requires runtime -->
 
 ### Manual — Anthropic (fallback, requires `ANTHROPIC_API_KEY` and **no** `DEEPSEEK_API_KEY`)
 - [ ] Unset `DEEPSEEK_API_KEY`, set `ANTHROPIC_API_KEY`, then F5

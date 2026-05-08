@@ -1,8 +1,6 @@
 class_name ActionPlan
 extends Resource
 
-const TacticalOrder = preload("res://scripts/command/tactical_order.gd")
-
 enum Tier { TACTICAL, STRATEGIC }
 
 @export var id: StringName = &""
@@ -66,7 +64,8 @@ static func from_dict(d: Dictionary) -> ActionPlan:
 	var p := ActionPlan.new()
 	p.id = StringName(d.get("id", ""))
 	p.deputy = StringName(d.get("deputy", ""))
-	p.tier = int(d.get("tier", Tier.TACTICAL))
+	var tier_val: int = int(d.get("tier", Tier.TACTICAL))
+	p.tier = tier_val as Tier
 	p.rationale = String(d.get("rationale", ""))
 	p.confidence = float(d.get("confidence", 1.0))
 	p.triggering_utterance = String(d.get("triggering_utterance", ""))

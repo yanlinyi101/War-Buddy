@@ -21,7 +21,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_adjust_zoom(zoom_step)
 	elif event is InputEventMouseMotion and _dragging:
-		translate(Vector3(-event.relative.x * drag_pan_speed, 0.0, -event.relative.y * drag_pan_speed))
+		global_position += Vector3(-event.relative.x * drag_pan_speed, 0.0, -event.relative.y * drag_pan_speed)
 		_clamp_to_bounds()
 
 func _process(delta: float) -> void:
@@ -48,7 +48,7 @@ func _process(delta: float) -> void:
 
 	if move != Vector3.ZERO:
 		move = move.normalized() * pan_speed * delta
-		translate(Vector3(move.x, 0.0, move.z))
+		global_position += Vector3(move.x, 0.0, move.z)
 		_clamp_to_bounds()
 
 func _adjust_zoom(amount: float) -> void:

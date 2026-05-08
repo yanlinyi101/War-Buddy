@@ -2,9 +2,6 @@
 # class_name omitted to avoid colliding with the autoload symbol of the same name.
 extends Node
 
-const TacticalOrder = preload("res://scripts/command/tactical_order.gd")
-const ActionPlan = preload("res://scripts/command/action_plan.gd")
-const ControlPolicy = preload("res://scripts/command/control_policy.gd")
 const OrderTypeRegistry = preload("res://scripts/command/order_type_registry.gd")
 
 signal plan_issued(plan: Resource)
@@ -50,7 +47,7 @@ func submit_plan(plan: Resource) -> Dictionary:
 	var inv = plan.validate_invariants()
 	if not inv["ok"]:
 		return {"accepted": [], "rejected": [], "plan_rejected": true,
-		        "violations": inv["violations"]}
+				"violations": inv["violations"]}
 	_recent_plans.append(plan)
 	_trim(_recent_plans, RING_BUFFER_SIZE)
 	plan_issued.emit(plan)
