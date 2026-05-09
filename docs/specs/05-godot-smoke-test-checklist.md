@@ -102,6 +102,17 @@
 - [ ] Destroy a second building within 5 s — no second tick fires (cooldown enforced)
 - [ ] After ≥8 s elapse since the last tick, destroying another building does fire a fresh tick
 
+## EventBus debug log HUD (v0.7.2)
+
+Debug build only.
+
+- [ ] Boot prints `[RTSMVP] EventLogHud ready (press \` to toggle)`
+- [ ] Press the **backtick (\`)** key — a panel appears in the upper-left listing recent events
+- [ ] Press backtick again — the panel hides
+- [ ] Destroy an enemy building — a colored `building_destroyed` line appears in the log
+- [ ] Type any utterance + submit — the deputy's resulting events do NOT push the log to overflow (it caps at 24 lines)
+- [ ] Release export does NOT include the panel
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

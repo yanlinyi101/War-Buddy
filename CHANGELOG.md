@@ -2,6 +2,16 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.7.2] — 2026-05-10
+
+### Added
+- **EventBus debug log HUD** (`scripts/hud/event_log_hud.gd` + `scenes/event_log_hud.tscn`) — debug-only overlay that subscribes to all `EventBus` channels and renders a 24-line scrolling log with timestamps and color-coded event kinds. Toggle visibility with the **backtick (`)** key. Bootstrap spawns it only inside `if OS.is_debug_build()`, so release builds never carry it.
+- Each line is shaped `<elapsed_s> <kind> k1=v1 k2=v2 ...` — a quick way to verify v0.7.0/0.7.1 plumbing during the manual smoke pass without rolling a custom listener.
+
+### Notes
+- The HUD is read-only — it doesn't drive any subscriptions itself; it only mirrors what `EventBus` already broadcasts. Adding a channel to `event_bus.gd` requires also wiring it into `event_log_hud.bind_event_bus`.
+- 134 tests still green (no new test cases — the HUD is purely visual; its correctness is a manual smoke check).
+
 ## [v0.7.1] — 2026-05-10
 
 ### Added

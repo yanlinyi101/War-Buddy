@@ -22,6 +22,7 @@ const OrderExecutorScript = preload("res://scripts/command/order_executor.gd")
 const CaptainScript = preload("res://scripts/ai/captain.gd")
 const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
 const HitstopScript = preload("res://scripts/feel/hitstop.gd")
+const EventLogHudScene = preload("res://scenes/event_log_hud.tscn")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -181,6 +182,13 @@ func _ready() -> void:
 		"ENABLED" if deepseek_active else "disabled (no API key)",
 	])
 	print("[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)")
+
+	# v0.7.2: EventBus debug log (debug builds only — release never spawns it).
+	if OS.is_debug_build():
+		var event_log = EventLogHudScene.instantiate()
+		hud.add_child(event_log)
+		event_log.bind_event_bus(EventBus)
+		print("[RTSMVP] EventLogHud ready (press ` to toggle)")
 
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
