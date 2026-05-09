@@ -43,6 +43,25 @@
 - [ ] Any pan input (WASD / edge / middle drag) breaks the lock; output prints `[RTSMVP] Camera follow broken by manual pan`
 - [ ] Press **Space** again — output prints `[RTSMVP] Camera follow OFF`
 
+## Feel polish (v0.6.0 — spec 11 §6 + §7)
+
+### Hover ring on enemy buildings (§6.2)
+- [ ] Move cursor over an `EnemyBuilding` cube — a red ring fades in beneath it within ~80 ms
+- [ ] Move cursor off — the ring fades out within ~120 ms
+- [ ] Hover then click-attack the building until destroyed — the ring disappears with the building (no orphan ring left over)
+- [ ] Hover ring does not block the left-click target/move behavior
+
+### Screen shake (§7.2)
+- [ ] Destroy any enemy building — camera shows a brief, subtle shake (XZ offset only, no zoom/Y change)
+- [ ] Destroy the final building (victory) — shake is noticeably stronger than per-building shake
+- [ ] Shake works while camera is in **Space-locked follow mode** without breaking the lock
+- [ ] Shake works while free-panning without leaving residual offset after it decays
+
+### Hitstop (§7.1)
+- [ ] Walk hero to an enemy building and let it auto-attack — on each hit landing both the hero and the building briefly freeze (~45 ms)
+- [ ] HUD command panel + deputy/captain bubbles continue updating during hitstop frames (proves Engine.time_scale is **not** being touched)
+- [ ] All 109 GUT tests pass
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

@@ -10,15 +10,22 @@ signal hp_changed(current_hp: int, max_hp: int)
 
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var hp_label: Label3D = $HpLabel3D
+@onready var hover_ring: Decal = get_node_or_null("HoverRing")
+
+const HOVER_FADE_IN_S := 0.08    # spec 11 §6.2: ≤80 ms
+const HOVER_FADE_OUT_S := 0.12
 
 var hp := 60
 var is_destroyed := false
+var _hover_tween: Tween = null
 
 func _ready() -> void:
 	hp = max_hp
 	set_meta("building_id", building_id)
 	_update_visuals()
 	hp_changed.emit(hp, max_hp)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 
 func take_damage(amount: int) -> void:
 	if is_destroyed:
@@ -28,6 +35,24 @@ func take_damage(amount: int) -> void:
 	hp_changed.emit(hp, max_hp)
 	if hp == 0:
 		_destroy()
+
+func _on_mouse_entered() -> void:
+	if is_destroyed or hover_ring == null:
+		return
+	if _hover_tween != null and _hover_tween.is_valid():
+		_hover_tween.kill()
+	hover_ring.visible = true
+	_hover_tween = create_tween()
+	_hover_tween.tween_property(hover_ring, "modulate:a", 1.0, HOVER_FADE_IN_S)
+
+func _on_mouse_exited() -> void:
+	if hover_ring == null:
+		return
+	if _hover_tween != null and _hover_tween.is_valid():
+		_hover_tween.kill()
+	_hover_tween = create_tween()
+	_hover_tween.tween_property(hover_ring, "modulate:a", 0.0, HOVER_FADE_OUT_S)
+	_hover_tween.tween_callback(func(): if hover_ring != null: hover_ring.visible = false)
 
 func _update_visuals() -> void:
 	if hp_label != null:
@@ -48,6 +73,8 @@ func _destroy() -> void:
 		$CollisionShape3D.disabled = true
 	if has_node("NavigationObstacle3D"):
 		$NavigationObstacle3D.avoidance_enabled = false
+	if hover_ring != null:
+		hover_ring.visible = false
 	# Emit before the tween so match-state / victory reacts on the same frame
 	# as the killing blow, not after the visual settles.
 	destroyed.emit(building_id)

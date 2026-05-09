@@ -20,6 +20,10 @@ var has_move_target := false
 var target_building = null
 var attack_cooldown := 0.0
 var input_locked := false
+var _hitstop = null   # injected by bootstrap; spec 11 §7.1
+
+func set_hitstop(h) -> void:
+	_hitstop = h
 
 func _ready() -> void:
 	move_target = global_position
@@ -56,6 +60,8 @@ func _physics_process(delta: float) -> void:
 			if attack_cooldown <= 0.0:
 				target_building.take_damage(ATTACK_DAMAGE)
 				attack_cooldown = ATTACK_INTERVAL
+				if _hitstop != null and _hitstop.has_method("request_hit"):
+					_hitstop.request_hit(self, target_building)
 		else:
 			hero_state.set_action("Closing")
 	elif has_move_target:

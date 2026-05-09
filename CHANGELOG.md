@@ -2,6 +2,21 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.6.0] — 2026-05-09
+
+First "feel polish" slice off doc 11 (`docs/specs/11-mvp-physics-and-feel.md`). All three additions are visible in the editor F5 run; none touch architecture or save format.
+
+### Added
+- **Enemy-building hover ring (spec 11 §6.2)** — moving the cursor over an `EnemyBuilding` fades a red ring decal in beneath it (~80 ms fade-in, ~120 ms fade-out). The building's `StaticBody3D` gains `input_ray_pickable = true`; hover state is wired through Godot's built-in `mouse_entered` / `mouse_exited` signals so it doesn't conflict with the existing left-click raycast in `hero_controller.gd`. Ring auto-hides on destruction.
+- **Camera screen shake (spec 11 §7.2)** — `RtsCamera.shake(magnitude, duration)` adds a decaying additive XZ offset on top of the pan/follow logic. `bootstrap.gd` triggers a subtle shake (`0.35 / 0.30 s`) on every enemy structure destruction and a bigger one (`0.9 / 0.6 s`) on victory. Magnitude is clamped at 2.0 m so a buggy caller can't fling the camera off-map.
+- **Hitstop driver (spec 11 §7.1)** — `scripts/feel/hitstop.gd` exposes `request_hit(attacker, victim, duration_ms)` and freezes the participants by toggling `process_mode = PROCESS_MODE_DISABLED` for the requested window (default 45 ms). We deliberately do **not** use `Engine.time_scale` — that would freeze HUD bubbles, deputy LLM tweens, and the mock client's `await`, all of which we want running through a hitstop. Hero-vs-building melee hits now request hitstop on every connect.
+- Tests — 8 new GUT cases (`test_hitstop` + shake assertions in `test_rts_camera_follow`). Total green count: **109/109**.
+
+### Notes
+- The HP bar two-layer ghost animation from spec 11 §7.3 is still pending; the existing Label3D HP text continues to work and isn't worth an in-place rewrite until we have a real HP-bar widget. Tracked for v0.6.1.
+- Hero-side hitstop currently fires on melee landing only. SquadUnit / Captain attacks don't request hitstop yet — partly because their attacks are continuous DPS-style ticks rather than discrete hits, and partly because freezing 3 squad units mid-engagement felt worse in eyeballing than letting them keep going. Revisit when doc 09's discrete-attack model lands.
+- Shake works in both follow and free-pan modes — the offset is removed and re-applied each frame so it composes cleanly with hero-follow.
+
 ## [v0.5.1] — 2026-05-08
 
 ### Added

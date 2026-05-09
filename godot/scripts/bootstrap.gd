@@ -18,6 +18,7 @@ const SnapshotBuilderScript = preload("res://scripts/ai/battlefield_snapshot_bui
 const OrderExecutorScript = preload("res://scripts/command/order_executor.gd")
 const CaptainScript = preload("res://scripts/ai/captain.gd")
 const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
+const HitstopScript = preload("res://scripts/feel/hitstop.gd")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -37,6 +38,7 @@ var llm_client: RefCounted = null
 var order_executor = null
 var captain = null
 var archon_controller = null
+var hitstop = null
 
 func _ready() -> void:
 	_register_core_order_types()
@@ -61,6 +63,14 @@ func _ready() -> void:
 	# Bind hero as the camera follow target (Space toggles follow mode).
 	if rts_camera != null and rts_camera.has_method("set_follow_target"):
 		rts_camera.set_follow_target(hero)
+
+	# Hitstop driver (spec 11 §7.1) — exposed so attackers can request a
+	# brief freeze on hit landing.
+	hitstop = HitstopScript.new()
+	hitstop.name = "Hitstop"
+	add_child(hitstop)
+	if hero.has_method("set_hitstop"):
+		hero.set_hitstop(hitstop)
 
 	hud.bind_hero_state(hero.hero_state)
 	hud.command_submitted.connect(_on_command_submitted)
@@ -161,6 +171,13 @@ func _ready() -> void:
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):
 		match_state.register_enemy_building(node)
+		# Subtle shake on every enemy structure destruction (spec 11 §7.2).
+		if node.has_signal("destroyed"):
+			node.destroyed.connect(_on_enemy_building_destroyed_for_shake)
+
+func _on_enemy_building_destroyed_for_shake(_building_id: String) -> void:
+	if rts_camera != null and rts_camera.has_method("shake"):
+		rts_camera.shake(0.35, 0.30)
 
 func _on_command_submitted(channel: String, text: String) -> void:
 	if match_state.is_match_locked:
@@ -181,6 +198,9 @@ func _on_voice_placeholder_clicked() -> void:
 func _on_victory_triggered() -> void:
 	hud.show_victory()
 	hero.set_input_locked(true)
+	# Bigger shake for the victory pump (spec 11 §7.2).
+	if rts_camera != null and rts_camera.has_method("shake"):
+		rts_camera.shake(0.9, 0.6)
 	print("[RTSMVP] Victory triggered")
 
 func _spawn_squad_units() -> void:

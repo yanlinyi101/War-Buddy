@@ -51,3 +51,28 @@ func test_manual_pan_breaks_follow():
 	assert_true(cam.is_following())
 	cam._break_follow_if_active()
 	assert_false(cam.is_following())
+
+# --- Screen shake (spec 11 §7.2) ---
+
+func test_shake_zero_magnitude_is_noop():
+	var cam = _make_camera()
+	cam.shake(0.0, 0.5)
+	assert_eq(cam._shake_remaining, 0.0)
+
+func test_shake_zero_duration_is_noop():
+	var cam = _make_camera()
+	cam.shake(1.0, 0.0)
+	assert_eq(cam._shake_remaining, 0.0)
+
+func test_shake_clamps_excessive_magnitude():
+	var cam = _make_camera()
+	cam.shake(99.0, 0.3)
+	assert_eq(cam._shake_magnitude, 2.0)   # clamp ceiling
+
+func test_shake_decays_after_duration():
+	var cam = _make_camera()
+	cam.shake(0.5, 0.1)
+	cam._apply_shake(0.05)
+	assert_gt(cam._shake_remaining, 0.0)
+	cam._apply_shake(0.10)
+	assert_eq(cam._shake_remaining, 0.0)

@@ -1,0 +1,215 @@
+{
+  "main": {
+    "id": "0ebff7d0a597685b",
+    "type": "split",
+    "children": [
+      {
+        "id": "4d69b88d0d4aeeca",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5ce4144195d7b4b5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "05-godot-smoke-test-checklist.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "05-godot-smoke-test-checklist"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "753f8b00deb055c2",
+    "type": "split",
+    "children": [
+      {
+        "id": "7e83380af61cb0fe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5894d6480bb29193",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "e4673858443aaf64",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "d6c7c168ab7ff9a4",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "ce0cd82b96d22255",
+    "type": "split",
+    "children": [
+      {
+        "id": "c07dd951db08ca34",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "793df7c3c7ef0c36",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "05-godot-smoke-test-checklist.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "05-godot-smoke-test-checklist 的反向链接列表"
+            }
+          },
+          {
+            "id": "f523558ce2c551eb",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "05-godot-smoke-test-checklist.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "05-godot-smoke-test-checklist 的出链列表"
+            }
+          },
+          {
+            "id": "f990497a417254e6",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "8e2656b89d93278d",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "0308a5159eff4ff3",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "05-godot-smoke-test-checklist.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "05-godot-smoke-test-checklist 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "5894d6480bb29193",
+  "lastOpenFiles": [
+    "05-godot-smoke-test-checklist.md.tmp.20472.1778227309464",
+    "05-godot-smoke-test-checklist.md.tmp.23768.1778221859948",
+    "05-godot-smoke-test-checklist.md.tmp.23768.1778220463747",
+    "05-godot-smoke-test-checklist.md.tmp.27828.1778220261368",
+    "05-godot-smoke-test-checklist.md.tmp.42500.1777717398275",
+    "12-test-and-replay-strategy.zh.md",
+    "12-test-and-replay-strategy.zh.md.tmp.33704.1777521526254",
+    "12-test-and-replay-strategy.md",
+    "12-test-and-replay-strategy.md.tmp.33704.1777521384635",
+    "10-warroom-and-preplans.zh.md",
+    "10-warroom-and-preplans.zh.md.tmp.33704.1777520559413",
+    "10-warroom-and-preplans.md",
+    "10-warroom-and-preplans.md.tmp.33704.1777520370837",
+    "09-entities-combat-economy.zh.md",
+    "09-entities-combat-economy.zh.md.tmp.30840.1777446671956",
+    "09-entities-combat-economy.md",
+    "09-entities-combat-economy.md.tmp.30840.1777446435470",
+    "08-ai-deputy-architecture.zh.md",
+    "07-command-system.zh.md",
+    "06-full-gameplay-vision.zh.md",
+    "mvp-phase-c-implementation-plan.md",
+    "mvp-phase-c-squad-validation-design.md",
+    "06-full-gameplay-vision.md",
+    "07-phase-c-implementation-plan.md",
+    "06-phase-c-squad-validation-design.md",
+    "05-godot-smoke-test-checklist.md"
+  ]
+}

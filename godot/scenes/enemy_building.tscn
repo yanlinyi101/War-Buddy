@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://enemybuilding"]
+[gd_scene load_steps=6 format=3 uid="uid://enemybuilding"]
 
 [ext_resource type="Script" path="res://scripts/enemy_building.gd" id="1_enemy"]
 
@@ -8,10 +8,18 @@ size = Vector3(2, 2, 2)
 [sub_resource type="BoxShape3D" id="BoxShape3D_building"]
 size = Vector3(2, 2, 2)
 
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_hover_ring"]
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
 [node name="EnemyBuilding" type="StaticBody3D" groups=["enemy_buildings"]]
 script = ExtResource("1_enemy")
 collision_layer = 2
 collision_mask = 1
+input_ray_pickable = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_building")
@@ -30,3 +38,10 @@ billboard = 1
 font_size = 26
 modulate = Color(1, 0.95, 0.8, 1)
 text = "HP 60/60"
+
+[node name="HoverRing" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.0, 0)
+size = Vector3(2.6, 1, 2.6)
+texture_albedo = SubResource("GradientTexture2D_hover_ring")
+modulate = Color(1, 0.25, 0.25, 0)
+visible = false
