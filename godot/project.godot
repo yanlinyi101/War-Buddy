@@ -19,6 +19,8 @@ config/features=PackedStringArray("4.6")
 OrderTypeRegistry="*res://scripts/command/order_type_registry.gd"
 CommandBus="*res://scripts/command/command_bus.gd"
 MemoryStore="*res://scripts/ai/memory_store.gd"
+GameState="*res://scripts/state/game_state.gd"
+EventBus="*res://scripts/state/event_bus.gd"
 
 [display]
 

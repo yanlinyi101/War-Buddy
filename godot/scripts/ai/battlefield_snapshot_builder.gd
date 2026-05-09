@@ -1,7 +1,27 @@
 class_name BattlefieldSnapshotBuilder
 extends Node
 
-# v1 stub — reads scene-tree groups directly. Doc 09 swaps this to GameState.
+# v0.7.0: queries GameState autoload for the canonical match clock + entity
+# lists; falls back to scene-tree groups when autoloads aren't mounted (used
+# by GUT tests that instantiate the builder in isolation).
+
+const RECENT_EVENTS_CAP := 20
+
+var _recent_events: Array = []   # ring buffer of EventBus payloads
+
+func _ready() -> void:
+	# Subscribe to EventBus if available so the LLM snapshot includes a
+	# rolling window of recent match events. v0.7.0 channels:
+	#   building_destroyed, unit_destroyed, match_ended.
+	var t = get_tree()
+	if t == null:
+		return
+	var bus = t.root.get_node_or_null("EventBus")
+	if bus == null:
+		return
+	bus.building_destroyed.connect(_record_event.bind("building_destroyed"))
+	bus.unit_destroyed.connect(_record_event.bind("unit_destroyed"))
+	bus.match_ended.connect(_record_event.bind("match_ended"))
 
 func build_for(deputy_id: StringName, _tier_hint: StringName = &"") -> Dictionary:
 	return {
@@ -9,15 +29,29 @@ func build_for(deputy_id: StringName, _tier_hint: StringName = &"") -> Dictionar
 		"you": _build_self_view(deputy_id),
 		"units": _build_units(),
 		"enemies": _build_enemies(),
-		"recent_events": [],   # populated when EventBus lands
+		"recent_events": _recent_events.duplicate(true),
 		"player_signals": _build_player_signals(),
 		"available_orders": _available_orders(deputy_id),
 	}
 
+func _record_event(payload: Dictionary, kind: String) -> void:
+	var entry := payload.duplicate(true)
+	entry["kind"] = kind
+	entry["at_tick"] = Engine.get_physics_frames()
+	_recent_events.append(entry)
+	while _recent_events.size() > RECENT_EVENTS_CAP:
+		_recent_events.pop_front()
+
 func _build_match_meta() -> Dictionary:
+	var elapsed: float = float(Time.get_ticks_msec()) / 1000.0
+	var t = get_tree()
+	if t != null:
+		var gs = t.root.get_node_or_null("GameState")
+		if gs != null and gs.has_method("match_elapsed_seconds"):
+			elapsed = gs.match_elapsed_seconds()
 	return {
 		"tick": Engine.get_physics_frames(),
-		"elapsed_s": int(Time.get_ticks_msec() / 1000.0),
+		"elapsed_s": int(elapsed),
 		"score": {"buildings_killed": 0, "units_lost": 0},
 	}
 

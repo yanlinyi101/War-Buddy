@@ -13,7 +13,10 @@ const DeputyScript = preload("res://scripts/ai/deputy.gd")
 const ClassifierRouterScript = preload("res://scripts/ai/classifier_router.gd")
 const MockClientScript = preload("res://scripts/ai/mock_client.gd")
 const DeepseekClientScript = preload("res://scripts/ai/deepseek_client.gd")
-const AnthropicClientScript = preload("res://scripts/ai/anthropic_client.gd")
+# AnthropicClient is intentionally NOT preloaded — per user directive,
+# DeepSeek is the only API-keyed LLM provider in the runtime path. The
+# AnthropicClient script remains in-tree for parity tests and possible
+# future re-enable, but is not reachable from `_make_llm_client`.
 const SnapshotBuilderScript = preload("res://scripts/ai/battlefield_snapshot_builder.gd")
 const OrderExecutorScript = preload("res://scripts/command/order_executor.gd")
 const CaptainScript = preload("res://scripts/ai/captain.gd")
@@ -44,6 +47,8 @@ func _ready() -> void:
 	_register_core_order_types()
 	CommandBus.set_registry(OrderTypeRegistry)
 	CommandBus.match_id = "match_%d" % Time.get_unix_time_from_system()
+	GameState.mark_match_started()
+	EventBus.publish_match_started({"match_id": CommandBus.match_id})
 
 	match_state = MatchStateScript.new()
 	match_state.name = "MatchState"
@@ -175,9 +180,12 @@ func _register_enemy_buildings() -> void:
 		if node.has_signal("destroyed"):
 			node.destroyed.connect(_on_enemy_building_destroyed_for_shake)
 
-func _on_enemy_building_destroyed_for_shake(_building_id: String) -> void:
+func _on_enemy_building_destroyed_for_shake(building_id: String) -> void:
 	if rts_camera != null and rts_camera.has_method("shake"):
 		rts_camera.shake(0.35, 0.30)
+	# Forward to EventBus so AI agents (Captain tick, future deputy memory
+	# consolidation) and BTs all see one canonical destruction event.
+	EventBus.publish_building_destroyed(building_id, &"enemy")
 
 func _on_command_submitted(channel: String, text: String) -> void:
 	if match_state.is_match_locked:
@@ -201,6 +209,8 @@ func _on_victory_triggered() -> void:
 	# Bigger shake for the victory pump (spec 11 §7.2).
 	if rts_camera != null and rts_camera.has_method("shake"):
 		rts_camera.shake(0.9, 0.6)
+	GameState.mark_victory()
+	EventBus.publish_match_ended("victory", {"elapsed_s": GameState.match_elapsed_seconds()})
 	print("[RTSMVP] Victory triggered")
 
 func _spawn_squad_units() -> void:
@@ -241,18 +251,16 @@ func _make_def(id: StringName, schema: Dictionary, deputies: Array, min_targets:
 	return d
 
 func _make_llm_client() -> RefCounted:
-	# Provider precedence (cost-first ordering):
-	#   1. DeepSeek — primary, cheapest, OpenAI-compatible tool-use.
-	#   2. Anthropic — fallback when DEEPSEEK_API_KEY missing but ANTHROPIC_API_KEY present.
-	#   3. Mock     — final fallback for CI / offline dev.
+	# Provider precedence (per user directive — DeepSeek is the only
+	# API-keyed provider used at runtime):
+	#   1. DeepSeek — primary, OpenAI-compatible tool-use, ~10× cheaper
+	#                 per 1M tokens than Anthropic Sonnet.
+	#   2. Mock     — fallback for CI / offline dev when DEEPSEEK_API_KEY
+	#                 is unset.
 	var deepseek = DeepseekClientScript.new()
 	deepseek.attach_to(self)
 	if deepseek.has_api_key():
 		return deepseek
-	var anthropic = AnthropicClientScript.new()
-	anthropic.attach_to(self)
-	if anthropic.has_api_key():
-		return anthropic
 	return MockClientScript.new()
 
 func _llm_kind_name(client: RefCounted) -> String:
@@ -260,8 +268,6 @@ func _llm_kind_name(client: RefCounted) -> String:
 		return "<none>"
 	if client is DeepseekClientScript:
 		return "DeepseekClient"
-	if client is AnthropicClientScript:
-		return "AnthropicClient"
 	if client is MockClientScript:
 		return "MockClient"
 	return "<unknown>"

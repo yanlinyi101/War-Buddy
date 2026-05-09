@@ -2,6 +2,25 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.7.0] — 2026-05-09
+
+The structural lever — `GameState` and `EventBus` autoloads from doc 09 §11 land. Captain autonomous tick, real match-event audit, and behavior-tree report-back channel all sit on these.
+
+### Added
+- **`GameState` autoload** (`scripts/state/game_state.gd`) — match clock (`mark_match_started` / `match_elapsed_seconds`), victory flag (`mark_victory` / `is_victory_triggered`), and proximity queries (`units_in_radius` / `buildings_in_radius` / `all_squad_units` / `all_enemy_buildings` / `enemy_buildings_alive`). v1 implementation backed by scene-tree groups; the API is the contract, the storage is replaceable when doc 09's faction state lands.
+- **`EventBus` autoload** (`scripts/state/event_bus.gd`) — match-level signal channel: `match_started`, `match_ended`, `unit_spawned`, `unit_destroyed`, `building_destroyed`, `hp_changed`, `order_completed`, `order_failed`, `order_progress`. All payloads are Dictionaries so adding fields is additive. Convenience publishers (`publish_match_ended` etc.) keep emit sites concise.
+- **`BattlefieldSnapshotBuilder` upgrade** — now reads `match_meta.elapsed_s` from `GameState`, and subscribes to `EventBus.{building_destroyed, unit_destroyed, match_ended}` to populate `recent_events` (ring buffer, 20-deep). Falls back to scene-tree groups when autoloads aren't mounted (used by GUT tests that instantiate the builder in isolation).
+- **Bootstrap wiring** — `GameState.mark_match_started` + `EventBus.publish_match_started` fire on `_ready`; enemy-building destruction publishes to `EventBus`; victory marks `GameState` and publishes `match_ended`.
+- 10 new GUT cases (`test_game_state`, `test_event_bus`). Total: **129/129** green.
+
+### Changed
+- **DeepSeek is now the only API-keyed LLM provider in the runtime path.** `bootstrap._make_llm_client` precedence simplified to **DeepSeek → Mock**. The `AnthropicClient` script remains in `scripts/ai/anthropic_client.gd` for parity tests / future re-enable, but `ANTHROPIC_API_KEY` is no longer consulted. The `Manual — Anthropic` smoke section in `05-godot-smoke-test-checklist.md` is marked REMOVED.
+
+### Notes
+- Captain autonomous LLM tick is now unblocked: it can subscribe to `EventBus.building_destroyed` and react. Deferred to a follow-up because the prompt budget and tick rate warrant a dedicated brainstorm before turning it on.
+- Faction state, minerals/gas, supply, and production queues from spec 09 §11 are deferred — they belong with the economy slice. v0.7.0 ships the channel + minimal queries; the schema can grow without breaking subscribers.
+- Behavior-tree subscribers to `EventBus.order_*` will land alongside `OrderExecutor`'s upgrade path in v0.8.x once unit mortality is in.
+
 ## [v0.6.2] — 2026-05-09
 
 ### Added

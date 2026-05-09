@@ -77,6 +77,18 @@
 - [ ] Bar disappears when the building is destroyed
 - [ ] All 119 GUT tests pass
 
+## GameState + EventBus autoloads (v0.7.0 — doc 09 §11)
+- [ ] Headless boot with no errors; `[RTSMVP] Bootstrap: ...` line still appears
+- [ ] In editor: destroy any enemy building → confirm `EventBus.building_destroyed` is observable from a debug listener (or via the Output log if you add a `print` in a listener)
+- [ ] Win the match → `EventBus.match_ended` payload has `reason="victory"` and a positive `elapsed_s`
+- [ ] `BattlefieldSnapshotBuilder.build_for(...)` includes a non-empty `recent_events` array after at least one building has been destroyed (verifiable from a deputy bubble after a kill)
+- [ ] All 129 GUT tests pass
+
+### LLM provider audit (v0.7.0 directive)
+- [ ] Boot with `DEEPSEEK_API_KEY` set → `[RTSMVP] Deputy active: ... llm=DeepseekClient`
+- [ ] Boot with no API key → `llm=MockClient`
+- [ ] Boot with **only** `ANTHROPIC_API_KEY` set → still `llm=MockClient` (Anthropic fallback is intentionally removed)
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**
@@ -152,10 +164,10 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] Output log shows `token_usage` numbers (sanity check that DeepSeek returned a valid envelope)
   <!-- static: deepseek_client.gd:79 assigns resp.token_usage = parsed.get("usage", {}); actual log output requires runtime -->
 
-### Manual — Anthropic (fallback, requires `ANTHROPIC_API_KEY` and **no** `DEEPSEEK_API_KEY`)
-- [ ] Unset `DEEPSEEK_API_KEY`, set `ANTHROPIC_API_KEY`, then F5
-- [ ] Boot prints `llm=AnthropicClient`
-- [ ] Same utterance behavior as DeepSeek section
+### Manual — Anthropic ~~fallback~~ (REMOVED in v0.7.0)
+> Per project directive, DeepSeek is the only API-keyed LLM provider in the
+> runtime path. `AnthropicClient` script remains in-tree for parity tests
+> but is not reached by `bootstrap._make_llm_client`. Do not test against it.
 
 ## A-chain + Captain + Archon (v0.5.0)
 
