@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://enemybuilding"]
+[gd_scene load_steps=7 format=3 uid="uid://enemybuilding"]
 
 [ext_resource type="Script" path="res://scripts/enemy_building.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/feel/hp_bar_3d.gd" id="2_hpbar"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_building"]
 size = Vector3(2, 2, 2)
@@ -45,3 +46,7 @@ size = Vector3(2.6, 1, 2.6)
 texture_albedo = SubResource("GradientTexture2D_hover_ring")
 modulate = Color(1, 0.25, 0.25, 0)
 visible = false
+
+[node name="HpBar3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+script = ExtResource("2_hpbar")

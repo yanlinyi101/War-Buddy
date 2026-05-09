@@ -69,6 +69,14 @@
 - [ ] Inspector exposes `max_speed`, `accel_time_s`, `stop_snap_speed` on `CommanderHero` for live tuning
 - [ ] All 114 GUT tests pass
 
+## HP ghost bar (v0.6.2 — spec 11 §7.3)
+- [ ] Each enemy building shows a small horizontal bar above it on game start (red over dark gray, full width)
+- [ ] On hero attack landing, the red portion shrinks **instantly**
+- [ ] A white "ghost" segment appears between the red and the bg, then catches up to the red position over ~400 ms
+- [ ] Bar billboards toward the camera (always faces you while panning / zooming)
+- [ ] Bar disappears when the building is destroyed
+- [ ] All 119 GUT tests pass
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

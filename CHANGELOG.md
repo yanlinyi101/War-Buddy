@@ -2,6 +2,19 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.6.2] — 2026-05-09
+
+### Added
+- **Two-layer HP bar on enemy buildings (spec 11 §7.3)** — `scripts/feel/hp_bar_3d.gd` + `HpBar3D` Sprite3D node added to `enemy_building.tscn`. Renders a 64×8 dynamic image with three stripes: dark background, white "ghost" damage indicator, red current HP. The current bar drops instantly on damage; the ghost catches up over 400 ms — the standard MOBA "I see *that* I took damage now, *how much* a moment later" cue. Sprite3D billboards toward the camera for free.
+- 5 new GUT cases (`test_hp_bar_3d`) covering instant red drop, ghost lag, ghost catch-up within 400 ms, heal snap-up, and zero-max-hp guard. Total: **119/119** green.
+
+### Changed
+- `enemy_building.gd::_update_visuals()` now drives the HpBar3D alongside the existing Label3D text and the body's tint material. Bar auto-hides on `_destroy()` along with the hover ring.
+
+### Notes
+- Hero HP still uses the v0.1.0 HUD label; porting the hero's HP to the same widget is deferred — the HUD-side widget is a Control, not a Sprite3D, so it'll be a near-duplicate `hp_bar_2d.gd` rather than a reuse.
+- SquadUnit / Captain still don't have HP bars because they don't have HP — that lands with v0.6.3+ (doc 09 unit mortality).
+
 ## [v0.6.1] — 2026-05-09
 
 ### Changed

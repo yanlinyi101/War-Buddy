@@ -11,6 +11,7 @@ signal hp_changed(current_hp: int, max_hp: int)
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var hp_label: Label3D = $HpLabel3D
 @onready var hover_ring: Decal = get_node_or_null("HoverRing")
+@onready var hp_bar: Sprite3D = get_node_or_null("HpBar3D")
 
 const HOVER_FADE_IN_S := 0.08    # spec 11 §6.2: ≤80 ms
 const HOVER_FADE_OUT_S := 0.12
@@ -57,6 +58,8 @@ func _on_mouse_exited() -> void:
 func _update_visuals() -> void:
 	if hp_label != null:
 		hp_label.text = "%s HP %d/%d" % [building_id, hp, max_hp]
+	if hp_bar != null and hp_bar.has_method("set_hp"):
+		hp_bar.set_hp(hp, max_hp)
 	var ratio := float(hp) / float(max_hp)
 	if mesh_instance != null:
 		var material := StandardMaterial3D.new()
@@ -75,6 +78,8 @@ func _destroy() -> void:
 		$NavigationObstacle3D.avoidance_enabled = false
 	if hover_ring != null:
 		hover_ring.visible = false
+	if hp_bar != null:
+		hp_bar.visible = false
 	# Emit before the tween so match-state / victory reacts on the same frame
 	# as the killing blow, not after the visual settles.
 	destroyed.emit(building_id)
