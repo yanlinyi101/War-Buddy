@@ -34,6 +34,20 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		_selection.clear()
 		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_K:
+		# Debug damage tool (v0.8.0): K applies 25 damage to each selected
+		# squad unit. Lets us verify HP bars + death + EventBus.unit_destroyed
+		# without yet having an enemy combat source. Debug builds only —
+		# DevSquadController is never instantiated in release.
+		_debug_damage_selected(25)
+		get_viewport().set_input_as_handled()
+
+func _debug_damage_selected(amount: int) -> void:
+	if _selection == null:
+		return
+	for u in _selection.get_units():
+		if is_instance_valid(u) and u.has_method("take_damage"):
+			u.take_damage(amount, null)
 
 func _handle_left_button(event: InputEventMouseButton) -> void:
 	if event.pressed:

@@ -1,15 +1,22 @@
 class_name SquadUnit
 extends CharacterBody3D
 
+signal hp_changed(current: int, maximum: int)
+signal died(unit_id: String)
+
 const MOVE_SPEED := 9.0
 const ATTACK_RANGE := 2.8
 const ATTACK_DAMAGE := 20
 const ATTACK_INTERVAL := 0.75
+const DEATH_FADE_S := 0.4
 
 @export var unit_id := "squad_unit"
+@export var max_hp: int = 100
 @export var debug_log_enabled := true
 const DEBUG_LOG_EVERY_N_FRAMES := 3  # ~20Hz at 60Hz physics
 
+var hp: int = 100
+var is_dead: bool = false
 var _move_target: Vector3 = Vector3.ZERO
 var _has_move_target := false
 var _attack_target: Node = null
@@ -24,15 +31,69 @@ var _last_in_range := false
 
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var selection_ring: Decal = $SelectionRing
+@onready var hp_bar: Sprite3D = get_node_or_null("HpBar3D")
 
 func _ready() -> void:
+	hp = max_hp
 	_ground_y = global_position.y
 	_move_target = global_position
 	nav_agent.target_position = global_position
 	selection_ring.visible = false
 	add_to_group("squad_units")
 	_last_logged_pos = global_position
-	_dlog_event("ready", "pos=%s ground_y=%.3f" % [_v2s(global_position), _ground_y])
+	if hp_bar != null and hp_bar.has_method("set_hp"):
+		hp_bar.set_hp(hp, max_hp)
+	hp_changed.emit(hp, max_hp)
+	_dlog_event("ready", "pos=%s ground_y=%.3f hp=%d" % [_v2s(global_position), _ground_y, hp])
+
+# --- Mortality (v0.8.0) ---
+
+func take_damage(amount: int, _source: Node = null) -> void:
+	if is_dead or amount <= 0:
+		return
+	hp = maxi(0, hp - amount)
+	if hp_bar != null and hp_bar.has_method("set_hp"):
+		hp_bar.set_hp(hp, max_hp)
+	hp_changed.emit(hp, max_hp)
+	# Forward to EventBus so the snapshot builder + debug HUD pick it up.
+	var t = get_tree()
+	if t != null:
+		var bus = t.root.get_node_or_null("EventBus")
+		if bus != null:
+			bus.publish_hp_changed(unit_id, hp, max_hp)
+	if hp == 0:
+		_die()
+
+func _die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	_attack_target = null
+	_has_move_target = false
+	velocity = Vector3.ZERO
+	if has_node("CollisionShape3D"):
+		$CollisionShape3D.disabled = true
+	if selection_ring != null:
+		selection_ring.visible = false
+	if hp_bar != null:
+		hp_bar.visible = false
+	died.emit(unit_id)
+	# Publish via EventBus before the visual fade so consumers (Captain
+	# memory, future BTs) see the death on the same frame.
+	var t = get_tree()
+	if t != null:
+		var bus = t.root.get_node_or_null("EventBus")
+		if bus != null:
+			bus.publish_unit_destroyed(unit_id, &"friendly", "")
+	# Remove from the group so OrderExecutor and snapshot queries stop
+	# pointing at a dying unit.
+	if is_in_group("squad_units"):
+		remove_from_group("squad_units")
+	# Visual fade then free.
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(self, "scale", Vector3.ONE * 0.05, DEATH_FADE_S)
+	tween.chain().tween_callback(queue_free)
+	print("[RTSMVP] SquadUnit %s died" % unit_id)
 
 # --- Public order interface ---
 

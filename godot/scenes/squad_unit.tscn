@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://squadunit"]
 
 [ext_resource type="Script" path="res://scripts/squads/squad_unit.gd" id="1_squad"]
+[ext_resource type="Script" path="res://scripts/feel/hp_bar_3d.gd" id="2_hpbar"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 height = 1.4
@@ -44,3 +45,7 @@ size = Vector3(1.6, 1, 1.6)
 texture_albedo = SubResource("GradientTexture2D_ring")
 modulate = Color(0.6, 0.9, 1, 1)
 visible = false
+
+[node name="HpBar3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+script = ExtResource("2_hpbar")

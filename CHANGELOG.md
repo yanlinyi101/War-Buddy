@@ -2,6 +2,26 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.8.0] — 2026-05-10
+
+First slice of doc 09 — SquadUnits gain real HP, can die, and announce themselves through `EventBus`. The v0.2.0 dev-mode invariant ("squads never lose HP, never die") is intentionally broken; the matching smoke-checklist line is now annotated.
+
+### Added
+- **SquadUnit mortality** — `max_hp` (default 100, `@export`), `hp`, `is_dead`, `take_damage(amount, source = null)`, `_die()`. New signals: `hp_changed(current, maximum)` and `died(unit_id)`.
+- **HP bar** above each squad unit, reusing `HpBar3D` from v0.6.2 (instant red drop + 400 ms ghost catch-up + automatic billboard). Bar hides on death.
+- **Death pipeline** — collision shape disabled, removed from the `squad_units` group on death (so `OrderExecutor` and snapshot queries stop pointing at a dying unit), `EventBus.publish_unit_destroyed` fires before the visual fade so consumers see the death on the same frame, then a 0.4 s scale-down tween into `queue_free`.
+- **Debug damage tool (debug builds only)** — `DevSquadController` listens for **K** and applies 25 damage to each currently-selected squad unit. Lets us verify HP bars + death + EventBus plumbing without needing real enemy combat yet.
+- 7 new GUT cases (`test_squad_unit_mortality`) covering: initial HP, take_damage decrement + signal, zero/negative noop, lethal damage clamps at zero + dies, EventBus publish on death, double-kill idempotency, group cleanup. Total: **141/141** green.
+
+### Changed
+- `take_damage` also forwards an `EventBus.publish_hp_changed` event on every hit so the debug log HUD and the snapshot builder's `recent_events` ring see the bleed in real time.
+- 05 smoke-checklist line "Squad units never lose HP, never die, and have no HP label" is annotated as a broken-invariant pointer to the new mortality section.
+
+### Notes
+- No combat source attacks SquadUnits in v0.8.0 — enemy buildings are still passive targets. The K-key tool is the only damage source. Real enemy units land alongside doc 09's faction roster.
+- Captain mortality is the next slice. `CaptainMemory.deaths` field is already plumbed (v0.5.0) — we just need to wire `Captain` to a CharacterBody3D body and connect the same death pipeline.
+- Ragdoll / soul VFX (spec 11 §3) deferred — current "fade + scale-down" is the placeholder.
+
 ## [v0.7.2] — 2026-05-10
 
 ### Added

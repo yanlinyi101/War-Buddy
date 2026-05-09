@@ -113,6 +113,19 @@ Debug build only.
 - [ ] Type any utterance + submit — the deputy's resulting events do NOT push the log to overflow (it caps at 24 lines)
 - [ ] Release export does NOT include the panel
 
+## SquadUnit mortality (v0.8.0 — first slice of doc 09)
+
+Debug build only (the K-key damage tool isn't available in release).
+
+- [ ] Each squad capsule shows a small HP bar above it on game start (red over dark gray, full width)
+- [ ] Drag-select all 3 capsules, then press **K** — each takes 25 damage; HP bars shrink with the v0.6.2 ghost-bar animation
+- [ ] Press K three more times on the same selection — capsules die one by one (fade + scale-down + free)
+- [ ] Each death emits an `EventBus.unit_destroyed` line in the event log HUD (toggle with backtick)
+- [ ] Killed units stop accepting orders (right-click after death is a no-op for that unit)
+- [ ] Killed units no longer show in `BattlefieldSnapshotBuilder.units` (verifiable via deputy bubble after a kill)
+- [ ] Captain bubbles do not crash when their squad's units die mid-tick
+- [ ] All 141 GUT tests pass
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**
@@ -148,8 +161,7 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [x] Press ESC — rings disappear; selection set is empty
 - [x] Click without dragging — hero left-click move still works (event fell through)
 - [x] Right-click on empty ground without a selection — hero target clears (event fell through)
-- [x] Squad units never lose HP, never die, and have no HP label
-  <!-- static: squad_unit.gd has no HP vars; squad_unit.tscn has no HP Label node -->
+- [x] ~~Squad units never lose HP, never die, and have no HP label~~ **(invariant broken in v0.8.0 — squads now have HP and die. See "SquadUnit mortality" section below.)**
 - [x] In a release build (`--export-release`), the DEV MODE label is absent and drag-box / right-click does nothing to squads
   <!-- static: DevModeLabel default visible=false in scene; show_dev_label() only called inside OS.is_debug_build() block in bootstrap.gd; DevSquadController not added in release builds -->
 
