@@ -161,15 +161,24 @@ func _ready() -> void:
 	# the captain whose squad is addressed (single captain at v0.5.0).
 	CommandBus.plan_issued.connect(_on_plan_issued_route_to_captain)
 
+	# v0.7.1: Captain autonomous tick. Subscribes to EventBus channels and
+	# fires a rate-limited LLM plan in response. Disabled when LLM is the
+	# Mock client (no point spending mock tokens on background ticks).
+	captain.bind_autonomous_deps(llm_client, snapshot_builder, OrderTypeRegistry)
+	captain.subscribe_to_event_bus(EventBus)
+	var deepseek_active := llm_client is DeepseekClientScript
+	captain.enable_autonomous_tick(deepseek_active)
+
 	archon_controller = ArchonControllerScript.new()
 	archon_controller.name = "ArchonController"
 	archon_controller.bind(CommandBus, deputy)
 	add_child(archon_controller)
 
-	print("[RTSMVP] Captain active: id=%s squad=%s persona=%s" % [
+	print("[RTSMVP] Captain active: id=%s squad=%s persona=%s autonomous_tick=%s" % [
 		String(captain.captain_id),
 		String(captain.squad_id),
 		String(captain_persona.persona_id) if captain_persona != null else "<none>",
+		"ENABLED" if deepseek_active else "disabled (no API key)",
 	])
 	print("[RTSMVP] OrderExecutor + ArchonController ready (F2 toggles archon in debug builds)")
 

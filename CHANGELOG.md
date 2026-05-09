@@ -2,6 +2,20 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.7.1] — 2026-05-10
+
+### Added
+- **Captain autonomous tick (spec 08 §11.6, vision §2.3)** — Captains now react to `EventBus` events on their own LLM call, separate from the player-utterance path. v0.7.1 ships one channel: `building_destroyed` triggers a rate-limited tactical-tier LLM call. The first ActionPlan returned is fed through Captain's existing `handle_plan` (persona filter → retag to own squad → `submit_orders` as `CAPTAIN`).
+- Cooldown — at most one autonomous LLM call per captain per `persona.autonomous_tick_seconds` (default 8 s, persona-tunable). Fast event bursts collapse into a single tick. Spec 08 §11.6 cost containment.
+- `Captain` API surface: `bind_autonomous_deps(llm, snapshot_builder, registry)`, `enable_autonomous_tick(bool)`, `subscribe_to_event_bus(EventBus)`. Two new signals — `autonomous_tick_fired(plan)` and `autonomous_tick_skipped(reason)` — make the path observable from tests and from a future debug HUD without polling.
+- **Bootstrap auto-enables the tick only when DeepseekClient is the active LLM** (i.e. `DEEPSEEK_API_KEY` is set). MockClient runs leave the tick disabled — no point burning mock tokens on background reactions, and CI/headless smoke stays cost-free.
+- 5 new GUT cases (`test_captain_autonomous`) using a stub LLM subclass to verify: disabled-state skip, unbound-deps skip, real fire on event, cooldown blocks rapid double-tick, empty-plan response is a valid skip. Total: **134/134** green.
+
+### Notes
+- Other EventBus channels (`unit_destroyed`, `hp_changed` thresholds) wire in alongside `Captain` reactions to those events. v0.7.1 deliberately ships only `building_destroyed` so we can eyeball cost in real DeepSeek runs before turning on more triggers.
+- The autonomous-tick path uses captain's persona, not the deputy's. The persona's `system_prompt_template` and `voice_style` shape the bubble; persona's `allowed_type_ids` filters disallowed orders before bus submission. So Captain Alpha can react in Alpha's voice, distinct from the deputy.
+- `BattlefieldSnapshotBuilder` is reused as-is — captain gets the same observation as deputy. Captain-specific snapshot crop (smaller spatial scope, captain's own squad only) is deferred until doc 09's faction-scoped queries land.
+
 ## [v0.7.0] — 2026-05-09
 
 The structural lever — `GameState` and `EventBus` autoloads from doc 09 §11 land. Captain autonomous tick, real match-event audit, and behavior-tree report-back channel all sit on these.

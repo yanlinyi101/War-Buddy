@@ -89,6 +89,19 @@
 - [ ] Boot with no API key → `llm=MockClient`
 - [ ] Boot with **only** `ANTHROPIC_API_KEY` set → still `llm=MockClient` (Anthropic fallback is intentionally removed)
 
+## Captain autonomous tick (v0.7.1 — spec 08 §11.6)
+
+### Auto (no API key)
+- [ ] Headless boot prints `[RTSMVP] Captain active: ... autonomous_tick=disabled (no API key)`
+- [ ] All 134 GUT tests pass
+- [ ] Destroying a building does **not** spawn extra captain bubbles (confirms the tick stays off in mock mode)
+
+### Manual — with DeepSeek
+- [ ] Boot with `DEEPSEEK_API_KEY` → boot line says `autonomous_tick=ENABLED`
+- [ ] Destroy any enemy building (have hero or squad attack it) — within ~3 s a *captain bubble* appears with deputy-flavored text reacting to the kill (e.g. "Reform on B5.") — distinct from the player-utterance path
+- [ ] Destroy a second building within 5 s — no second tick fires (cooldown enforced)
+- [ ] After ≥8 s elapse since the last tick, destroying another building does fire a fresh tick
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

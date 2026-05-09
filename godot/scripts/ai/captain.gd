@@ -19,10 +19,13 @@ extends Node
 #   - LLM-driven sub-order decomposition.
 
 const TacticalOrderScript = preload("res://scripts/command/tactical_order.gd")
+const DeputyLLMClientScript = preload("res://scripts/ai/deputy_llm_client.gd")
 
 signal spoke(text: String, captain_id: StringName)
 signal plan_received(plan: Resource)
 signal plan_rejected_locally(plan: Resource, reason: StringName)
+signal autonomous_tick_fired(plan: Resource)
+signal autonomous_tick_skipped(reason: StringName)
 
 @export var captain_id: StringName = &"captain_default"
 @export var squad_id: StringName = &"alpha"
@@ -33,6 +36,13 @@ var memory: Resource = null                # CaptainMemory
 var short_term_memory: Array[Resource] = []  # last N plans this match
 var _bus: Node = null
 
+# --- Autonomous tick (spec 08 §11.6) ---
+var _llm: RefCounted = null
+var _snapshot_builder: Node = null
+var _registry: Node = null
+var _last_tick_ms: int = 0
+var _autonomous_tick_enabled: bool = false
+
 func bind_command_bus(bus: Node) -> void:
 	_bus = bus
 
@@ -41,6 +51,71 @@ func bind_memory(m: Resource) -> void:
 
 func bind_squad(sid: StringName) -> void:
 	squad_id = sid
+
+func bind_autonomous_deps(llm: RefCounted, snapshot_builder: Node, registry: Node) -> void:
+	# Captain calls LLM directly with tier_hint = "tactical" — it does NOT
+	# go through ClassifierRouter (that's for player utterances per spec 08
+	# §11.6). The LLM still returns ActionPlan(s); captain treats each plan's
+	# orders as proposed sub-orders for its own squad.
+	_llm = llm
+	_snapshot_builder = snapshot_builder
+	_registry = registry
+
+func enable_autonomous_tick(enabled: bool = true) -> void:
+	_autonomous_tick_enabled = enabled
+
+func subscribe_to_event_bus(event_bus: Node) -> void:
+	# v0.7.1 wire: react to building_destroyed events. Future channels
+	# (unit_destroyed, hp_changed thresholds) drop in alongside.
+	if event_bus == null:
+		return
+	if not event_bus.building_destroyed.is_connected(_on_building_destroyed):
+		event_bus.building_destroyed.connect(_on_building_destroyed)
+
+func _on_building_destroyed(_payload: Dictionary) -> void:
+	if not _autonomous_tick_enabled:
+		autonomous_tick_skipped.emit(&"disabled")
+		return
+	if _llm == null or _snapshot_builder == null:
+		autonomous_tick_skipped.emit(&"unbound")
+		return
+	# Cooldown — spec 08 §11.6 caps at one autonomous LLM call per K
+	# seconds. Persona's autonomous_tick_seconds wins, default 8 s.
+	var min_interval_ms := 8000
+	if persona != null and persona.has_method("get") and persona.get("autonomous_tick_seconds") != null:
+		min_interval_ms = int(float(persona.autonomous_tick_seconds) * 1000.0)
+	var now := Time.get_ticks_msec()
+	if _last_tick_ms != 0 and now - _last_tick_ms < min_interval_ms:
+		autonomous_tick_skipped.emit(&"cooldown")
+		return
+	_last_tick_ms = now
+	_run_autonomous_tick()
+
+func _run_autonomous_tick() -> void:
+	var req = DeputyLLMClientScript.SubmitPlanRequest.new()
+	req.persona = persona
+	# Captain's snapshot is the deputy's seat snapshot for v0.7.1 (smaller
+	# crop arrives with doc 09's faction-scoped queries).
+	req.observation = _snapshot_builder.build_for(StringName("captain_%s" % String(captain_id)), &"tactical")
+	req.utterance = ""
+	req.tier_hint = &"tactical"
+	if _registry != null:
+		req.available_type_ids = _registry.list_for_deputy(&"deputy")
+	var resp = await _llm.submit_plan(req)
+	if resp == null or resp.error != &"":
+		autonomous_tick_skipped.emit(&"llm_error" if resp == null else resp.error)
+		return
+	if resp.plans.is_empty():
+		# Empty plan = "do nothing" is a valid LLM response per spec.
+		autonomous_tick_skipped.emit(&"empty_plan")
+		return
+	# Apply only the first plan; subsequent plans within one tick are
+	# discarded to keep cost predictable.
+	var plan = resp.plans[0]
+	autonomous_tick_fired.emit(plan)
+	# Captain's existing handle_plan() handles persona-filter + retag +
+	# submit_orders + speak — single source of truth for plan ingestion.
+	handle_plan(plan)
 
 func handle_plan(plan: Resource) -> void:
 	if plan == null:
