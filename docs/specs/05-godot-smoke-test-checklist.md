@@ -62,6 +62,13 @@
 - [ ] HUD command panel + deputy/captain bubbles continue updating during hitstop frames (proves Engine.time_scale is **not** being touched)
 - [ ] All 109 GUT tests pass
 
+## Hero movement feel (v0.6.1 — spec 11 §4)
+- [ ] Click ground far from hero — hero accelerates over ~100 ms (visible ramp from rest, not a snap)
+- [ ] Hero reaches a deliberate-feeling top speed (~4.5 m/s — between DOTA and old RTS)
+- [ ] Click ground close to hero or wait until path-end — hero stops in a single frame, no skating / overshoot
+- [ ] Inspector exposes `max_speed`, `accel_time_s`, `stop_snap_speed` on `CommanderHero` for live tuning
+- [ ] All 114 GUT tests pass
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

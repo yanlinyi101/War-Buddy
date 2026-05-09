@@ -2,6 +2,23 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.6.1] — 2026-05-09
+
+### Changed
+- **Hero movement feel (spec 11 §4)** — replaces the v0.1.0 "instant top-speed, instant stop" motion with the spec-defined "responsive but grounded" curve.
+  - `max_speed`: 9.0 → 4.5 m/s. The previous value crossed the 36×36 graybox in ~4 s, which read as arcade-twitchy. 4.5 m/s sits between DOTA-deliberate and old-RTS-sluggish per §4.1's intent. The full spec target (~45 s diagonal ≈ 1.1 m/s) felt glacial in graybox; 4.5 is the working compromise — tunable from the inspector now.
+  - Acceleration: 0 → top speed in 100 ms (§4.2). Hero no longer teleports to top speed on click.
+  - Stop: instant snap to zero on path-end / stop command (§4.4). Asymmetry — slow start, hard stop — is the signature.
+  - All three values exposed as `@export` on `HeroController`: `max_speed`, `accel_time_s`, `stop_snap_speed`.
+
+### Added
+- `HeroController.step_velocity_toward()` — pure static helper extracted so the velocity-shaping math is testable without a scene tree.
+- 5 new GUT cases in `test_hero_movement.gd` covering snap-stop, no-overshoot, accel-reaches-max-within-window, residual snap, and Y-preservation. Total: **114/114** green.
+
+### Notes
+- Visual rotation easing (§4.3, "mesh visual rotation eases over ~100 ms to logical facing") is deferred — the hero is currently a sphere and has no visible facing. Re-add when a non-spherical mesh lands.
+- SquadUnit movement still uses its v0.2.0 direct-velocity model — that's fine for v0.6.1 because the squad units are AI-driven and don't need input-feel polish. Revisit only if their motion looks wrong next to the hero's new curve.
+
 ## [v0.6.0] — 2026-05-09
 
 First "feel polish" slice off doc 11 (`docs/specs/11-mvp-physics-and-feel.md`). All three additions are visible in the editor F5 run; none touch architecture or save format.

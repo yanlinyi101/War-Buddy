@@ -3,7 +3,20 @@ class_name HeroController
 
 signal target_selected(target)
 
-const MOVE_SPEED := 9.0
+# Movement tunables (spec 11 §4) — exposed on the inspector so playtest
+# values can be iterated without touching code.
+#   max_speed:         §4.1 — current map diagonal ~50 m; 4.5 m/s ≈ 11 s
+#                      across, between DOTA-deliberate and old-RTS-sluggish.
+#                      Spec target is ~45 s across (≈1.1 m/s) but at graybox
+#                      that feels glacial; 4.5 is the working compromise.
+#   accel_time_s:      §4.2 — 0 → top in 80–120 ms; 0.10 s default.
+#   stop_snap_speed:   §4.4 — below this magnitude, velocity snaps to 0
+#                      in a single frame (instant deceleration on stop /
+#                      path-end). Avoids skating.
+@export var max_speed: float = 4.5
+@export var accel_time_s: float = 0.10
+@export var stop_snap_speed: float = 0.05
+
 const ATTACK_RANGE := 2.8
 const ATTACK_DAMAGE := 20
 const ATTACK_INTERVAL := 0.75
@@ -67,29 +80,54 @@ func _physics_process(delta: float) -> void:
 	elif has_move_target:
 		hero_state.set_action("Moving")
 
+	# Compute desired horizontal velocity, then ease toward it (spec 11 §4.2)
+	# or snap to zero on stop (§4.4).
+	var desired := Vector3.ZERO
 	if has_move_target:
 		var flat_target := Vector3(move_target.x, global_position.y, move_target.z)
 		if nav_agent.target_position.distance_to(flat_target) > 0.01:
 			nav_agent.target_position = flat_target
 		if nav_agent.is_navigation_finished():
 			has_move_target = false
-			velocity = Vector3.ZERO
 			if not is_instance_valid(target_building):
 				hero_state.set_action("Idle")
 		else:
 			var next_point := nav_agent.get_next_path_position()
 			var offset := next_point - global_position
 			offset.y = 0.0
-			if offset.length() <= 0.001:
-				velocity = Vector3.ZERO
-			else:
-				velocity = offset.normalized() * MOVE_SPEED
-	else:
-		velocity = Vector3.ZERO
+			if offset.length() > 0.001:
+				desired = offset.normalized() * max_speed
 
+	velocity = step_velocity_toward(velocity, desired, max_speed, accel_time_s, stop_snap_speed, delta)
 	move_and_slide()
 	if velocity.length() > 0.1:
 		look_at(global_position + velocity, Vector3.UP)
+
+# Pure helper (static so tests can call without scene tree). Spec 11 §4.2 / §4.4.
+static func step_velocity_toward(
+	current: Vector3,
+	desired: Vector3,
+	top_speed: float,
+	accel_seconds: float,
+	snap_threshold: float,
+	delta: float
+) -> Vector3:
+	# §4.4 — instant deceleration when target is zero (slow start, hard stop).
+	if desired == Vector3.ZERO:
+		return Vector3(0.0, current.y, 0.0)
+	# §4.2 — accelerate at top_speed / accel_seconds up to top_speed.
+	var accel := top_speed / maxf(accel_seconds, 0.001)
+	var flat := Vector3(current.x, 0.0, current.z)
+	var step := desired - flat
+	var step_len := step.length()
+	var max_step := accel * delta
+	if step_len > max_step:
+		step = step.normalized() * max_step
+	flat += step
+	# Snap tiny residuals to zero so we don't wiggle around the target.
+	if flat.length() < snap_threshold and desired.length() < snap_threshold:
+		flat = Vector3.ZERO
+	return Vector3(flat.x, current.y, flat.z)
 
 func _handle_primary_click(screen_position: Vector2) -> void:
 	var from := camera.project_ray_origin(screen_position)
