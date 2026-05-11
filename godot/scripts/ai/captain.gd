@@ -32,6 +32,13 @@ signal autonomous_tick_skipped(reason: StringName)
 @export var persona: Resource = null      # CaptainPersona
 @export var agency_tier: StringName = &"captain"
 
+# v0.8.1 — Captain mortality. Captain "embodies" a single SquadUnit
+# (spec 08 §11.6, vision §2.3 "lighter LLM agent embodied as a
+# battlefield unit"). When that body dies, captain stops responding,
+# CaptainMemory.deaths increments, and EventBus broadcasts.
+var _body: Node = null
+var alive: bool = true
+
 var memory: Resource = null                # CaptainMemory
 var short_term_memory: Array[Resource] = []  # last N plans this match
 var _bus: Node = null
@@ -51,6 +58,45 @@ func bind_memory(m: Resource) -> void:
 
 func bind_squad(sid: StringName) -> void:
 	squad_id = sid
+
+func bind_body(body: Node) -> void:
+	# Captain rides a specific squad unit as its "body". When that unit
+	# dies (SquadUnit.died), captain dies too — mortality lifecycle per
+	# spec 08 §11.6 / vision §2.3.
+	if _body == body:
+		return
+	_body = body
+	if body == null:
+		return
+	if body.has_signal("died") and not body.died.is_connected(_on_body_died):
+		body.died.connect(_on_body_died)
+
+func _on_body_died(_unit_id: String) -> void:
+	if not alive:
+		return
+	alive = false
+	# Persist the death — CaptainMemory survives across matches per
+	# vision §2.3 lock-in. Use MemoryStore autoload via tree lookup so
+	# tests without the autoload still pass.
+	if memory != null:
+		memory.deaths = memory.deaths + 1
+		var t = get_tree()
+		if t != null:
+			var store = t.root.get_node_or_null("MemoryStore")
+			if store != null and store.has_method("save_captain"):
+				store.save_captain(memory)
+	# Announce. The Captain bubble fires "Down. Reform." so the player
+	# sees the death in-channel, not just in the event log.
+	speak("Down. Hold position.")
+	# Forward to EventBus so future doc-09 consumers (faction roster,
+	# Deputy consolidation) see the captain death distinctly.
+	var t2 = get_tree()
+	if t2 != null:
+		var bus = t2.root.get_node_or_null("EventBus")
+		if bus != null:
+			# captain-distinct event — uses unit_destroyed channel with
+			# faction_id="captain" so debug HUD shows the difference.
+			bus.publish_unit_destroyed("captain_%s" % String(captain_id), &"captain", "")
 
 func bind_autonomous_deps(llm: RefCounted, snapshot_builder: Node, registry: Node) -> void:
 	# Captain calls LLM directly with tier_hint = "tactical" — it does NOT
@@ -73,6 +119,9 @@ func subscribe_to_event_bus(event_bus: Node) -> void:
 		event_bus.building_destroyed.connect(_on_building_destroyed)
 
 func _on_building_destroyed(_payload: Dictionary) -> void:
+	if not alive:
+		autonomous_tick_skipped.emit(&"dead")
+		return
 	if not _autonomous_tick_enabled:
 		autonomous_tick_skipped.emit(&"disabled")
 		return
@@ -119,6 +168,9 @@ func _run_autonomous_tick() -> void:
 
 func handle_plan(plan: Resource) -> void:
 	if plan == null:
+		return
+	if not alive:
+		plan_rejected_locally.emit(plan, &"captain_dead")
 		return
 	plan_received.emit(plan)
 	# Persona filter

@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.8.1] — 2026-05-10
+
+### Added
+- **Captain mortality (spec 08 §11.6, vision §2.3)** — Captain "embodies" a `SquadUnit` body via `bind_body(body)`. When that unit's `died` signal fires, captain `alive` flips to false, `CaptainMemory.deaths` increments, `MemoryStore.save_captain` persists it to `user://captains/<persona_id>.json`, and `EventBus.unit_destroyed` broadcasts with `faction_id="captain"` so the debug HUD shows captain deaths distinctly.
+- Dead captain rejects new plans (`plan_rejected_locally` reason `"captain_dead"`) and skips autonomous tick (`autonomous_tick_skipped` reason `"dead"`).
+- Bootstrap binds captain alpha to squad unit `squad_a` on `_ready` — so K-damaging that capsule three times kills the captain alongside it.
+- 7 new GUT cases (`test_captain_mortality`). Total: **148/148** green.
+
+### Notes
+- Memory survives the captain's death by design (vision §2.3 lock-in) — re-loading `user://captains/captain_alpha.json` in a fresh match shows the prior `deaths` count carried forward.
+- The body binding is one-way: captain reacts to body death, but does not yet drive the body's movement directly (the body is still controlled by `Captain → CommandBus → OrderExecutor → SquadUnit.order_*`). That's correct for the strict A-chain — the captain "is" the body for mortality, but plans still flow through the chain.
+
 ## [v0.8.0] — 2026-05-10
 
 First slice of doc 09 — SquadUnits gain real HP, can die, and announce themselves through `EventBus`. The v0.2.0 dev-mode invariant ("squads never lose HP, never die") is intentionally broken; the matching smoke-checklist line is now annotated.

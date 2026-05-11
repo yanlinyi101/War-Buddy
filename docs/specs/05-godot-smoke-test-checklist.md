@@ -126,6 +126,15 @@ Debug build only (the K-key damage tool isn't available in release).
 - [ ] Captain bubbles do not crash when their squad's units die mid-tick
 - [ ] All 141 GUT tests pass
 
+## Captain mortality (v0.8.1 — spec 08 §11.6)
+- [ ] Boot prints `[RTSMVP] Captain alpha embodied in squad_a`
+- [ ] Select `squad_a` capsule, K-damage it to death (4× K) — captain bubble fires `Down. Hold position.`
+- [ ] Event log HUD shows `unit_destroyed faction_id=captain unit_id=captain_alpha`
+- [ ] Submit a command after captain death — no captain bubble follows (plan rejected silently for the dead captain)
+- [ ] `user://captains/captain_alpha.json` exists and has `"deaths": 1` (or higher) after one death
+- [ ] Re-launch the game — captain still alive again (re-embodied in the new squad_a), but JSON file still shows the cumulative `deaths` count
+- [ ] All 148 GUT tests pass
+
 ## Command panel
 
 - [x] Channel selector offers **Combat Squad Leader** and **Economy Officer**

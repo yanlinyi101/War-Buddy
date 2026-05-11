@@ -157,6 +157,13 @@ func _ready() -> void:
 	captain.bind_memory(MemoryStore.load_captain(&"captain_alpha"))
 	add_child(captain)
 	captain.spoke.connect(_on_captain_spoke)
+	# v0.8.1: Bind captain to a squad unit as its body. squad_a is the
+	# captain's "embodiment"; if it dies, the captain dies (and
+	# CaptainMemory.deaths increments).
+	var body_unit = _find_squad_unit_by_id("squad_a")
+	if body_unit != null:
+		captain.bind_body(body_unit)
+		print("[RTSMVP] Captain alpha embodied in %s" % String(body_unit.unit_id))
 	# Route Deputy plans through the Captain. CommandBus.plan_issued fires
 	# after the deputy's submit_plan is accepted; we dispatch the plan to
 	# the captain whose squad is addressed (single captain at v0.5.0).
@@ -229,6 +236,12 @@ func _on_victory_triggered() -> void:
 	GameState.mark_victory()
 	EventBus.publish_match_ended("victory", {"elapsed_s": GameState.match_elapsed_seconds()})
 	print("[RTSMVP] Victory triggered")
+
+func _find_squad_unit_by_id(target_id: String) -> Node:
+	for u in get_tree().get_nodes_in_group("squad_units"):
+		if u.get("unit_id") != null and String(u.unit_id) == target_id:
+			return u
+	return null
 
 func _spawn_squad_units() -> void:
 	if hero == null:
