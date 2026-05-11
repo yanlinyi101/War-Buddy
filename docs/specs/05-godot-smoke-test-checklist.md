@@ -103,7 +103,8 @@
 ## GameState + EventBus autoloads (v0.7.0 — doc 09 §11)
 - [x] Headless boot with no errors; `[RTSMVP] Bootstrap: ...` line still appears
   <!-- boot 2026-05-11: clean boot, no SCRIPT ERROR/Parse Error; "[RTSMVP] Bootstrap: hero=CommanderHero hud=HudRoot buildings=3" present -->
-- [ ] In editor: destroy any enemy building → confirm `EventBus.building_destroyed` is observable from a debug listener (or via the Output log if you add a `print` in a listener)
+- [x] In editor: destroy any enemy building → confirm `EventBus.building_destroyed` is observable from a debug listener (or via the Output log if you add a `print` in a listener)
+  <!-- runtime 2026-05-11: destroyed EnemyBuildingC in editor run; EventLogHud (backtick overlay) showed colored building_destroyed event line; visual + log confirmed -->
 - [x] Win the match → `EventBus.match_ended` payload has `reason="victory"` and a positive `elapsed_s`
   <!-- static: bootstrap.gd:256 EventBus.publish_match_ended("victory",{"elapsed_s":GameState.match_elapsed_seconds()}); GameState tracks match start time so elapsed_s>0 -->
 - [x] `BattlefieldSnapshotBuilder.build_for(...)` includes a non-empty `recent_events` array after at least one building has been destroyed (verifiable from a deputy bubble after a kill)
@@ -130,7 +131,8 @@
   <!-- static: captain.gd:124-127 _on_building_destroyed() returns early with autonomous_tick_skipped.emit(&"disabled") when not _autonomous_tick_enabled; no LLM call, no speak() -->
 
 ### Manual — with DeepSeek
-- [ ] Boot with `DEEPSEEK_API_KEY` → boot line says `autonomous_tick=ENABLED`
+- [x] Boot with `DEEPSEEK_API_KEY` → boot line says `autonomous_tick=ENABLED`
+  <!-- runtime 2026-05-11: "[RTSMVP] Captain active: id=alpha squad=alpha persona=captain_alpha autonomous_tick=ENABLED" confirmed in editor run with key present -->
 - [ ] Destroy any enemy building (have hero or squad attack it) — within ~3 s a *captain bubble* appears with deputy-flavored text reacting to the kill (e.g. "Reform on B5.") — distinct from the player-utterance path
 - [ ] Destroy a second building within 5 s — no second tick fires (cooldown enforced)
 - [ ] After ≥8 s elapse since the last tick, destroying another building does fire a fresh tick
@@ -141,9 +143,12 @@ Debug build only.
 
 - [x] Boot prints `[RTSMVP] EventLogHud ready (press \` to toggle)`
   <!-- boot 2026-05-11: line "[RTSMVP] EventLogHud ready (press ` to toggle)" confirmed in debug build headless output -->
-- [ ] Press the **backtick (\`)** key — a panel appears in the upper-left listing recent events
-- [ ] Press backtick again — the panel hides
-- [ ] Destroy an enemy building — a colored `building_destroyed` line appears in the log
+- [x] Press the **backtick (\`)** key — a panel appears in the upper-left listing recent events
+  <!-- runtime 2026-05-11: backtick pressed in editor run; EventLogHud panel appeared in upper-left listing recent events -->
+- [x] Press backtick again — the panel hides
+  <!-- runtime 2026-05-11: second backtick press confirmed panel hides -->
+- [x] Destroy an enemy building — a colored `building_destroyed` line appears in the log
+  <!-- runtime 2026-05-11: destroyed EnemyBuildingC; orange building_destroyed line appeared in EventLogHud panel -->
 - [ ] Type any utterance + submit — the deputy's resulting events do NOT push the log to overflow (it caps at 24 lines)
 - [x] Release export does NOT include the panel
   <!-- static: bootstrap.gd:208 "if OS.is_debug_build():" guards both EventLogHudScene.instantiate() and PrePlanPickerScene.instantiate(); never spawned in release -->
@@ -228,7 +233,8 @@ Run from a debug build (editor F5, or `godot --path godot`).
   <!-- static: bootstrap.gd:127 prints this unconditionally after notify_event() -->
 - [x] No SCRIPT ERROR / Parse Error lines in the boot output
   <!-- boot 2026-05-11: headless boot output clean — no SCRIPT ERROR or Parse Error lines -->
-- [ ] After a brief run, `user://order_log/<match_id>.plans.ndjson` contains a JSON line for the inline sample plan
+- [x] After a brief run, `user://order_log/<match_id>.plans.ndjson` contains a JSON line for the inline sample plan
+  <!-- runtime 2026-05-11: match_1778486535.plans.ndjson confirmed at user://order_log/; 2 NDJSON entries for "move to mid" (3 move orders to D4) and "attack north" (move+attack) -->
 - [x] All 82 GUT tests pass
   <!-- runtime 2026-05-11: 272 tests / 47 scripts pass (count grown from 82 with post-v0.3 additions) -->
 - [ ] Phase C squad puppets and Phase A hero controls still work (regression check)
