@@ -2,6 +2,23 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.11.0] — 2026-05-10
+
+First slice of doc 10 — preplans become real on-disk Resources instead of inline-bootstrap stubs.
+
+### Added
+- **`PrePlanTrigger`** is now a top-level Resource at `scripts/command/pre_plan_trigger.gd` (was an inner class). Same `matches(payload)` API.
+- **`PrePlanResource`** is the new top-level Resource at `scripts/command/pre_plan_resource.gd`. Same fields as the old inner `PrePlan` class.
+- **`data/preplans/sample_opening.tres`** — first .tres-authored preplan ships in-tree. Triggers on `match_start`, zero orders (placeholder). Headless boot log: `PrePlanRunner loaded 1 preplans from res://data/preplans`.
+- 4 new GUT cases (`test_pre_plan_resource`). Total: **242/242** green.
+
+### Changed
+- `scripts/command/pre_plan.gd` is now a deprecated host that re-exports the two top-level classes as `PrePlanScript.PrePlanTrigger` / `PrePlanScript.PrePlan` for back-compat with existing callers in bootstrap and `test_pre_plan.gd`.
+
+### Notes
+- Spec 10's full war-room UI (plan list / form editor / order modal / region painter / share-code import) is a multi-day piece. v0.11.0 unblocks .tres authoring so designers can hand-edit preplans **today** while the UI is built incrementally in v0.11.1+.
+- All existing tests pass through the back-compat shim — no behavior change in the runner.
+
 ## [v0.10.2] — 2026-05-10
 
 ### Added

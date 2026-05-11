@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=3 format=3 uid="uid://preplansampleopening"]
+
+[ext_resource type="Script" path="res://scripts/command/pre_plan_resource.gd" id="1_plan"]
+[ext_resource type="Script" path="res://scripts/command/pre_plan_trigger.gd" id="2_trig"]
+
+[sub_resource type="Resource" id="Trigger_match_start"]
+script = ExtResource("2_trig")
+event = &"match_start"
+conditions = {}
+
+[resource]
+script = ExtResource("1_plan")
+name = "Sample Opening"
+deputy = &"deputy"
+trigger = SubResource("Trigger_match_start")
+orders = []
+enabled = true
+repeat = false
+cooldown_seconds = 0.0
