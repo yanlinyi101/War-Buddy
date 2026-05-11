@@ -2,6 +2,21 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.10.2] — 2026-05-10
+
+### Added
+- **`ProductionService` autoload (doc 09 §5.4 / §6 / §7.4)** — owns the production queue runtime for the `train` order verb.
+  - `validate_train(faction, building_def, unit_id)` enforces: building's `produces` list, tier gating, prerequisite buildings, supply headroom, resource cost. Returns `{ok, reason, unit_def}`.
+  - `enqueue_train(faction, building_id, building_def, unit_id)` deducts resources + reserves supply on enqueue (SC2 convention) and pushes onto the queue.
+  - `tick(faction, delta)` advances each queue head's `build_time_remaining`; completion fires `training_completed(faction_id, building_id, unit_id)` and pops.
+  - `cancel_head(faction, building_id)` returns 75 % of the unit's mineral + gas cost and frees the reserved supply (spec §5.4 partial refund).
+- 12 new GUT cases (`test_production_service`). Total: **238/238** green.
+
+### Notes
+- No physical unit spawn yet — the graybox map has no spawn point for a player HQ. `training_completed` is the seam: when v0.11+ wires a player HQ scene node, the spawn callback subscribes here and instantiates the actual CharacterBody3D.
+- Cost / supply gating is single-faction, single-pass — multi-faction validation lands with 09+1.
+- `set_rally` / `cancel_production` order verbs from spec 09 §9 are registered (v0.9.2) but not yet routed into this service. Hooking the `CommandBus.order_issued` → `ProductionService.enqueue_train` bridge waits on a `production_building.gd` scene node that exposes its `building_def` + instance id.
+
 ## [v0.10.1] — 2026-05-10
 
 ### Added
