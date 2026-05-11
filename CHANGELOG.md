@@ -2,6 +2,17 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.10.0] — 2026-05-10
+
+### Added
+- **Behavior-tree contract (doc 09 §12)** — `scripts/bt/behavior_tree.gd` is the abstract base. Subscribes to `CommandBus.order_issued`, filters by `target_unit_ids` containing self's `unit_id`. Reports back through `EventBus.order_completed / order_failed / order_progress`. Two helpers (`report_completed`, `report_failed`, `report_progress`) keep emit sites tidy.
+- **`WorkerBT` skeleton** (`scripts/bt/worker_bt.gd`) — routes `move`/`gather`/`return_cargo`/`build`/`stop` to a small state machine (`idle / moving / harvesting / returning / building`). Unsupported `type_id`s self-report as `order_failed` with reason `unsupported_type_id`.
+- 7 new GUT cases (`test_behavior_tree_contract`). Total: **220/220** green.
+
+### Notes
+- v0.10.0 ships the contract shape only. The real worker gather animation cycle + ResourceNode + deposit point land in v0.10.1.
+- Per spec 09 §12: "BT internals (selectors, sequences, decorators) are an implementation choice." v0.10.0 uses a flat state-machine because no concrete BT yet needs nested control flow. When a BT does, it can swap in a real tree library or roll a small one without touching the contract.
+
 ## [v0.9.6] — 2026-05-10
 
 ### Added
