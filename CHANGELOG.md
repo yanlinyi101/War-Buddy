@@ -2,6 +2,17 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.8.3] — 2026-05-10
+
+### Added
+- **Physics layer registry (spec 11 §2.1)** — `scripts/physics_layers.gd` is the canonical mapping from layer name → index (terrain=1, enemy_structure=2, friendly_unit=3, hero=4, enemy_unit=5, friendly_structure=6, corpse=7, soul=8, attack_player=9, attack_enemy=10, cursor_pick=11). Also exports pre-composed masks (`MASK_HERO_COLLISION`, `MASK_FRIENDLY_UNIT_COLLISION`, `MASK_MOUSE_PICK`) for code paths that need to build collision masks at runtime.
+- `project.godot` `[layer_names]` block names the 11 layers so they're labeled in the editor's Inspector pickers instead of bare "Layer 5".
+- 4 new GUT cases pin the index/bit contract — if any layer shifts, the test fails. Total: **156/156** green.
+
+### Notes
+- v0.8.3 is documentation + plumbing only. Existing scenes' numeric `collision_layer` / `collision_mask` values are unchanged, so no behavior moved.
+- Layers `enemy_unit`, `friendly_structure`, `corpse`, `soul`, `attack_*` are pre-reserved but currently empty — they fill in as 09 ships unit / building / corpse / projectile types.
+
 ## [v0.8.2] — 2026-05-10
 
 ### Added

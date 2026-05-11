@@ -32,6 +32,20 @@ window/stretch/mode="canvas_items"
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
+[layer_names]
+
+3d_physics/layer_1="terrain"
+3d_physics/layer_2="enemy_structure"
+3d_physics/layer_3="friendly_unit"
+3d_physics/layer_4="hero"
+3d_physics/layer_5="enemy_unit"
+3d_physics/layer_6="friendly_structure"
+3d_physics/layer_7="corpse"
+3d_physics/layer_8="soul"
+3d_physics/layer_9="attack_hitbox_player"
+3d_physics/layer_10="attack_hitbox_enemy"
+3d_physics/layer_11="cursor_pick"
+
 [input]
 
 command_submit={
