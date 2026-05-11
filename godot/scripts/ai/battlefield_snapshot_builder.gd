@@ -32,6 +32,40 @@ func build_for(deputy_id: StringName, _tier_hint: StringName = &"") -> Dictionar
 		"recent_events": _recent_events.duplicate(true),
 		"player_signals": _build_player_signals(),
 		"available_orders": _available_orders(deputy_id),
+		"tech_state": _build_tech_state(),
+		"economy": _build_economy(),
+	}
+
+func _build_tech_state() -> Dictionary:
+	# Doc 09 §6.3 — surfaces tech_tier + buildings_completed so the LLM
+	# can reason about "do we tech up or push now?".
+	var t = get_tree()
+	if t == null:
+		return {}
+	var gs = t.root.get_node_or_null("GameState")
+	if gs == null:
+		return {}
+	var f = gs.get_faction(&"player")
+	if f == null or not f.has_method("tech_state_snapshot"):
+		return {}
+	return f.tech_state_snapshot()
+
+func _build_economy() -> Dictionary:
+	# Doc 09 §5 — resource / supply snapshot.
+	var t = get_tree()
+	if t == null:
+		return {}
+	var gs = t.root.get_node_or_null("GameState")
+	if gs == null:
+		return {}
+	var f = gs.get_faction(&"player")
+	if f == null:
+		return {}
+	return {
+		"minerals": f.minerals,
+		"gas": f.gas,
+		"supply_used": f.supply_used,
+		"supply_max": f.supply_max,
 	}
 
 func _record_event(payload: Dictionary, kind: String) -> void:

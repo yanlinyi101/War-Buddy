@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.3] — 2026-05-10
+
+### Added
+- **`FactionState` Resource (doc 09 §11)** — `faction_id`, `minerals`, `gas`, `supply_used`, `supply_max`, `current_tier`, `alive_units`, `alive_buildings`, `research_complete`, `production_queues`, `buildings_completed`. Helpers: `has_resources`, `spend`, `refund`, `supply_available`, `tech_state_snapshot`, `to_dict`.
+- **`GameState` autoload extended with faction registry** — `get_faction(id)`, `all_factions()`, `current_tier(faction_id)`, `is_unit_buildable(faction_id, unit_id)`. `mark_match_started` now seeds a default `player` faction (50 minerals, 10 supply cap, tier 1) so the LLM snapshot has something to read on the first frame.
+- **`BattlefieldSnapshotBuilder` now surfaces `tech_state` and `economy`** — the deputy can finally see "do we tech up or push now?" data per vision §2.2.
+- 10 new GUT cases (`test_faction_state` covers Resource helpers + GameState autoload integration). Total: **187/187** green.
+
+### Notes
+- No production runtime yet — the `production_queues` dict and `is_unit_buildable` will gain real prereq + cost validation when worker construction + factory buildings ship (v0.9.4+).
+- v1 vision §2 says "shared mirror roster" — only one faction (`player`) is seeded at runtime. Multi-faction splitting is doc 09+1.
+
 ## [v0.9.2] — 2026-05-10
 
 ### Added

@@ -14,17 +14,31 @@
 
 extends Node
 
+const FactionStateScript = preload("res://scripts/state/faction_state.gd")
 const GROUP_SQUAD_UNITS := "squad_units"
 const GROUP_ENEMY_BUILDINGS := "enemy_buildings"
 
 var _match_start_ms: int = 0
 var _victory_triggered: bool = false
+var _factions: Dictionary = {}        # StringName -> FactionState
 
 # --- Match clock --------------------------------------------------------------
 
 func mark_match_started() -> void:
 	_match_start_ms = Time.get_ticks_msec()
 	_victory_triggered = false
+	# Seed the default player faction so snapshot calls have something to
+	# read on match start. Doc 09 §2 v1 = shared mirror roster; multi-
+	# faction split lands in 09+1.
+	if not _factions.has(&"player"):
+		var f = FactionStateScript.new()
+		f.faction_id = &"player"
+		f.minerals = 50          # spec doesn't pin a starting amount; 50 is enough for 1 worker
+		f.gas = 0
+		f.supply_used = 0
+		f.supply_max = 10        # default HQ +10
+		f.current_tier = 1
+		_factions[&"player"] = f
 
 func mark_victory() -> void:
 	_victory_triggered = true
@@ -71,3 +85,37 @@ func enemy_buildings_alive() -> int:
 		if b.has_method("get") and not b.get("is_destroyed"):
 			n += 1
 	return n
+
+# --- Faction state (doc 09 §11) ---
+
+func get_faction(faction_id: StringName):
+	return _factions.get(faction_id, null)
+
+func all_factions() -> Array:
+	return _factions.values()
+
+func current_tier(faction_id: StringName) -> int:
+	var f = get_faction(faction_id)
+	if f == null:
+		return 0
+	return f.current_tier
+
+func is_unit_buildable(faction_id: StringName, _unit_id: StringName) -> Dictionary:
+	# v0.9.3 minimal: faction must exist + have supply headroom.
+	# Full prereq + cost check lands with the UnitDef library load.
+	var f = get_faction(faction_id)
+	if f == null:
+		return {"ok": false, "missing_prereqs": [], "missing_supply": 1, "missing_resources": {}}
+	var supply_ok = f.supply_available() > 0
+	return {
+		"ok": supply_ok,
+		"missing_prereqs": [],
+		"missing_supply": 0 if supply_ok else 1,
+		"missing_resources": {},
+	}
+
+# --- Test helper ---
+func _reset_for_test() -> void:
+	_factions.clear()
+	_match_start_ms = 0
+	_victory_triggered = false
