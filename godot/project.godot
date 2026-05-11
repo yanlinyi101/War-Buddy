@@ -24,6 +24,7 @@ EventBus="*res://scripts/state/event_bus.gd"
 CombatService="*res://scripts/combat/combat_service.gd"
 EntityLibrary="*res://scripts/combat/entity_library.gd"
 ProductionService="*res://scripts/state/production_service.gd"
+ReplayLogger="*res://scripts/replay/replay_logger.gd"
 
 [display]
 

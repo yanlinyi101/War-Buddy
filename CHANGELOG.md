@@ -2,6 +2,23 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.12.0] — 2026-05-10
+
+First slice of doc 12 — the replay persistence + reader layer.
+
+### Added
+- **`ReplayLogger` autoload** (`scripts/replay/replay_logger.gd`) — subscribes to `EventBus.{match_started, match_ended, building_destroyed, unit_destroyed, hp_changed, order_completed, order_failed}` and appends each event to `user://order_log/<match_id>.events.ndjson`. On `match_ended` it also writes a manifest at `user://order_log/<match_id>.manifest.json` with `match_id`, `started_at`, `ended_at`, `outcome`, `schema_version`, `deputy_persona`, `map_id` — the schema from spec 12 §7.2.
+- **Static reader API** for the future replay viewer (§7.3):
+  - `ReplayLogger.read_manifest(match_id)` → Dictionary.
+  - `ReplayLogger.read_ndjson(path)` → Array.
+  - `ReplayLogger.read_replay_timeline(match_id)` → merged + ms-sorted Array of events, orders, plans (each tagged with `__channel`).
+- 6 new GUT cases (`test_replay_logger`) covering match_started write, manifest on match_ended, configure(persona, map), persistence-disabled noop, arbitrary event append, timeline merge. Total: **248/248** green.
+
+### Notes
+- The visual replay viewer scene from §7.3 (timeline scrubber, plan/order log panels, jump-to-next-failure button) is the next slice. v0.12.0 lands the data layer so the viewer can be built against a stable file format.
+- `--replay <match_id>` CLI invocation (§7.4) is also deferred — needs the viewer scene to launch.
+- Existing `CommandBus` already writes `.ndjson` (orders), `.rejected.ndjson`, and `.plans.ndjson` per spec 07 §9 — `ReplayLogger` completes the four-file set with `.events.ndjson` + the manifest.
+
 ## [v0.11.0] — 2026-05-10
 
 First slice of doc 10 — preplans become real on-disk Resources instead of inline-bootstrap stubs.
