@@ -24,6 +24,7 @@ const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
 const HitstopScript = preload("res://scripts/feel/hitstop.gd")
 const EventLogHudScene = preload("res://scenes/event_log_hud.tscn")
 const NavRecoveryScript = preload("res://scripts/nav_recovery.gd")
+const PrePlanPickerScene = preload("res://scenes/preplan_picker_hud.tscn")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -209,6 +210,11 @@ func _ready() -> void:
 		hud.add_child(event_log)
 		event_log.bind_event_bus(EventBus)
 		print("[RTSMVP] EventLogHud ready (press ` to toggle)")
+		# v0.14.0: PrePlan picker (debug builds only — doc 10 §4 partial slice).
+		var preplan_picker = PrePlanPickerScene.instantiate()
+		hud.add_child(preplan_picker)
+		preplan_picker.bind_runner(pre_plan_runner)
+		print("[RTSMVP] PrePlanPickerHud ready (press P to toggle)")
 
 func _register_enemy_buildings() -> void:
 	for node in get_tree().get_nodes_in_group("enemy_buildings"):

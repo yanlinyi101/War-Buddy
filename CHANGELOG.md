@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.14.0] — 2026-05-10
+
+### Added
+- **PrePlan debug picker HUD (doc 10 §4 minimal slice)** — `scenes/preplan_picker_hud.tscn` + `scripts/hud/preplan_picker_hud.gd`. Toggle with **P** in debug builds. Lists every preplan loaded by `PrePlanRunner` with its trigger event; each row has a **Fire** button that calls `PrePlanRunner.notify_event(plan.trigger.event, …)` to manually trigger the preplan and watch the deputy/captain response without waiting for the real event condition.
+- Bootstrap spawns the picker only inside `if OS.is_debug_build()`; release builds never carry it.
+- New boot log line: `[RTSMVP] PrePlanPickerHud ready (press P to toggle)`.
+- **272/272** GUT tests still green (no new tests — the picker is purely visual; correctness is a manual smoke check).
+
+### Notes
+- This is **not** the full spec 10 §4 war-room — there's no form editor, no order-edit modal, no region painter, no share-code import. v0.14.0 is the smallest piece of doc 10 that has playtest value today: a way to verify a hand-authored `.tres` preplan fires correctly in-game.
+- The full war-room UI (multi-tab, multi-day) lands in v0.14.1+ as a dedicated UI pass.
+
 ## [v0.13.2] — 2026-05-10
 
 ### Added
