@@ -2,6 +2,16 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.10.1] — 2026-05-10
+
+### Added
+- **`ResourceNodeDef` Resource (doc 09 §5.2)** — `node_id`, `resource_type` (mineral / gas), `initial_amount`, `current_amount`, `harvest_amount_per_cycle`, `max_concurrent_workers`, `depletes`. Helpers: `harvest()` returns the actual taken amount (clamped against `current_amount`; gas always returns the cycle amount); `is_depleted()`; `saturation_for(active_workers)` returns 0.0–1.0 for the LLM snapshot.
+- 6 new GUT cases (`test_resource_node`). Total: **226/226** green.
+
+### Notes
+- The runtime `ResourceNode` scene node + the in-world placement at game start are deferred to the same slice as the production runtime (v0.10.2) — they all need an HQ + worker spawn pipeline to be useful. v0.10.1 just lands the data class so worker BTs can already call `harvest()` against test stubs.
+- The class is named `ResourceNodeDef` to dodge Godot 4's built-in `Resource` symbol clash; the spec name "ResourceNode" maps directly.
+
 ## [v0.10.0] — 2026-05-10
 
 ### Added
