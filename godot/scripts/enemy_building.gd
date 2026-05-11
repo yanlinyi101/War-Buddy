@@ -17,6 +17,12 @@ signal attacked_target(target_id: String, damage: int)
 @export var attack_damage: int = 10
 @export var attack_interval: float = 0.85
 @export var attack_enabled: bool = true
+# Doc 09 §4 — building defensive shot defaults to `normal` (matches §7.3's
+# `turret` row). Armor class for the building itself is `structure`.
+@export var armor_class: StringName = &"structure"
+@export var armor: int = 1
+@export var dmg: int = 10
+@export var dmg_type: StringName = &"normal"
 
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var hp_label: Label3D = $HpLabel3D
@@ -59,9 +65,22 @@ func _process(delta: float) -> void:
 		return
 	if not victim.has_method("take_damage"):
 		return
-	victim.take_damage(attack_damage, self)
+	# Doc 09 §4.4 — route through CombatService for the matrix + armor formula.
+	# Falls back to attack_damage if CombatService autoload isn't mounted
+	# (e.g. isolated GUT tests). dmg field mirrors attack_damage so the
+	# matrix sees the canonical base.
+	var final_dmg: int = attack_damage
+	var t = get_tree()
+	if t != null:
+		var svc = t.root.get_node_or_null("CombatService")
+		if svc != null and svc.has_method("resolve_damage"):
+			# Pass attack_damage as the explicit base so the @export dmg
+			# field is authoritative even if a future copy diverges.
+			dmg = attack_damage
+			final_dmg = svc.resolve_damage(self, victim, attack_damage)
+	victim.take_damage(final_dmg, self)
 	_attack_cooldown = attack_interval
-	attacked_target.emit(String(victim.get("unit_id")) if victim.get("unit_id") != null else victim.name, attack_damage)
+	attacked_target.emit(String(victim.get("unit_id")) if victim.get("unit_id") != null else victim.name, final_dmg)
 
 func _find_nearest_friendly_in_range() -> Node:
 	# v0.9.0 simple targeting: nearest squad unit within attack_range.

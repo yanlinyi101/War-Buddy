@@ -12,6 +12,12 @@ const DEATH_FADE_S := 0.4
 
 @export var unit_id := "squad_unit"
 @export var max_hp: int = 100
+# Doc 09 §3.3 / §4.2 — the v0.2 dev capsule maps closest to `frontline_basic`
+# (heavy / normal). Exposed so each squad can drift to a different class
+# when the roster pass lands.
+@export var armor_class: StringName = &"heavy"
+@export var armor: int = 1
+@export var dmg_type: StringName = &"normal"
 @export var debug_log_enabled := true
 const DEBUG_LOG_EVERY_N_FRAMES := 3  # ~20Hz at 60Hz physics
 

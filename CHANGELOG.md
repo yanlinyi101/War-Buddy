@@ -2,6 +2,20 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.1] — 2026-05-10
+
+### Added
+- **Doc 09 §3.2 / §7.1 Resource schemas** — `scripts/combat/unit_def.gd` (UnitDef) and `scripts/combat/building_def.gd` (BuildingDef). Per-unit / per-building .tres files ship alongside the roster pass (v0.9.3+); v0.9.1 lands the data shape only.
+- **Doc 09 §4 combat math** — `scripts/combat/damage_matrix.gd` (DamageMatrix) holds the 4×5 dmg_type × armor_class multiplier table. `compute(base_dmg, dmg_type, armor_class, flat_armor)` follows `max(0, base × matrix − armor)` with truncate-toward-zero on the fractional result. `default_matrix()` factory seeds the canonical v1 numbers from §4.3.
+- **`data/combat/damage_matrix.tres`** — seeded with the canonical matrix so designers can edit it without touching code.
+- **`CombatService` autoload** (`scripts/combat/combat_service.gd`) — loads `damage_matrix.tres` on `_ready`; `resolve_damage(attacker, target, base_dmg = -1)` reads attacker `dmg`/`dmg_type` and target `armor_class`/`armor` and returns the final int.
+- **`SquadUnit` / `EnemyBuilding` integration** — both gain `armor_class`, `armor`, `dmg_type`, `dmg` exports. Squad capsules default to `heavy` armor (closest to doc 09 §3.3 `frontline_basic`). Buildings default to `structure`. `EnemyBuilding`'s defensive attack now routes through `CombatService.resolve_damage` — so a turret firing `normal` at a `heavy` capsule gets the 1.25× counter bonus before flat armor subtraction.
+- 9 new GUT cases (`test_damage_matrix` + CombatService sanity). Total: **172/172** green.
+
+### Notes
+- Hero is not yet annotated with `hero` armor class — it's still invincible (not in `squad_units` group). When hero damage lands (paired with spec 11 §7.2's "hero takes big hit → big shake"), it'll inherit the same export shape and route through `CombatService`.
+- The 7-unit and 9-building rosters from doc 09 §3.3 + §7.3 are not yet `.tres` files. v0.9.1 ships the schema; the .tres pack ships when the spawner/economy layer needs them in v0.9.3.
+
 ## [v0.9.0] — 2026-05-10
 
 ### Added
