@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://feeltunables"]
+
+[ext_resource type="Script" path="res://scripts/feel/feel_tunables.gd" id="1_tunables"]
+
+[resource]
+script = ExtResource("1_tunables")
+hero_cross_map_time_seconds = 45.0
+hero_acceleration_time_seconds = 0.10
+hero_visual_turn_ease_seconds = 0.10
+hero_stop_time_seconds = 0.0
+camera_follow_break_threshold_diag = 1.5
+camera_pitch_degrees = 75.0
+feedback_hover_ring_fade_in_seconds = 0.08
+combat_hitstop_duration_seconds = 0.045
+combat_shake_hp_threshold = 0.10
+hp_bar_ghost_delay_seconds = 0.40
+nav_off_mesh_displacement_max_m = 1.5
+nav_off_mesh_grace_frames = 3
+corpse_settle_time_seconds = 1.5
+corpse_default_lifetime_seconds = 60.0

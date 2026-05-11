@@ -2,6 +2,17 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.12.1] — 2026-05-10
+
+### Added
+- **`FeelTunables` Resource (doc 11 §10)** — single touch-surface for all spec 11 tunables. Fields cover hero movement (cross-map time, accel time, visual turn ease, stop time), camera (follow break threshold, pitch), feedback (hover ring fade, hitstop duration, shake threshold, ghost-bar delay), navigation (off-mesh displacement, grace frames), and corpses (settle, lifetime). Defaults match the §10 table exactly.
+- **`data/feel/feel_tunables.tres`** — canonical .tres ships with the spec defaults so designers can edit numbers without code touch.
+- `FeelTunables.default_tunables()` — loader that prefers the .tres, falls back to in-memory defaults if missing.
+- 2 new GUT cases (`test_feel_tunables`). Total: **250/250** green.
+
+### Notes
+- v0.12.1 lands the data shape only. Subsystems still ship their own `@export` defaults; migration to read from `FeelTunables` happens incrementally per tuning request. The data-driven path is in place when a designer wants to A/B-test values.
+
 ## [v0.12.0] — 2026-05-10
 
 First slice of doc 12 — the replay persistence + reader layer.
