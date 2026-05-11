@@ -2,6 +2,17 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.13.0] — 2026-05-10
+
+### Added
+- **Tier-up trigger (doc 09 §6)** — `GameState.register_completed_building(faction_id, build_id)` appends to `faction.buildings_completed`, adds `supply_provided` to `supply_max`, and bumps `current_tier` if the building is a `tech`-category def with a higher `tech_tier`. `forge` (T2) and `arcanum` (T3) are the canonical promoters.
+- **Spec 09 §10.5 starting conditions** — `mark_match_started` now seeds the player faction with the canonical opener: 50 mineral, 0 gas, 6 supply used (6 starting workers), 10 supply max (1 HQ), tier 1, `buildings_completed = [hq]`.
+- 8 new GUT cases (`test_tier_up`) covering starting state, forge → T2, arcanum → T3, non-tech doesn't bump, supply_depot adds supply, unknown faction, and idempotency. Total: **264/264** green.
+
+### Notes
+- No physical worker / HQ in the world yet — the starting conditions are data-only seeding so the LLM snapshot reads "6 workers / 10 supply / 1 HQ" on first frame.
+- The future `build` order executor will call `register_completed_building` on completion — that closes the loop from "deputy says build forge" → workers construct → forge enters `buildings_completed` → tier bumps to 2 → siege_basic + turret unlock automatically through `is_unit_buildable`.
+
 ## [v0.12.2] — 2026-05-10
 
 ### Added

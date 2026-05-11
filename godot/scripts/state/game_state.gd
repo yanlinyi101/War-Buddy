@@ -28,16 +28,20 @@ func mark_match_started() -> void:
 	_match_start_ms = Time.get_ticks_msec()
 	_victory_triggered = false
 	# Seed the default player faction so snapshot calls have something to
-	# read on match start. Doc 09 §2 v1 = shared mirror roster; multi-
-	# faction split lands in 09+1.
+	# read on match start. Doc 09 §10.5 starting conditions: 50 mineral,
+	# 0 gas, 1 hq (supply +10), 6 worker_basic (6 supply used), 1
+	# hero_commander (0 supply). Worker/HQ aren't physically spawned in
+	# the graybox yet — buildings_completed = [hq] and supply_used = 6
+	# is the data-only seed so snapshots read correctly.
 	if not _factions.has(&"player"):
 		var f = FactionStateScript.new()
 		f.faction_id = &"player"
-		f.minerals = 50          # spec doesn't pin a starting amount; 50 is enough for 1 worker
+		f.minerals = 50
 		f.gas = 0
-		f.supply_used = 0
-		f.supply_max = 10        # default HQ +10
+		f.supply_used = 6          # spec 09 §10.5 — 6 starting workers
+		f.supply_max = 10          # 1 HQ provides +10
 		f.current_tier = 1
+		f.buildings_completed = [&"hq"] as Array[StringName]
 		_factions[&"player"] = f
 
 func mark_victory() -> void:
@@ -113,6 +117,33 @@ func is_unit_buildable(faction_id: StringName, _unit_id: StringName) -> Dictiona
 		"missing_supply": 0 if supply_ok else 1,
 		"missing_resources": {},
 	}
+
+# v0.13.0 — spec 09 §6 tier-up trigger. Called when a building enters
+# `buildings_completed`. Bumps current_tier if the building is a tech
+# building with a higher tech_tier than the faction currently holds.
+# Forge (T2) and Arcanum (T3) are the canonical tier-up triggers.
+func register_completed_building(faction_id: StringName, build_id: StringName) -> Dictionary:
+	var f = get_faction(faction_id)
+	if f == null:
+		return {"ok": false, "reason": &"unknown_faction"}
+	if not f.buildings_completed.has(build_id):
+		f.buildings_completed.append(build_id)
+	# Look up via EntityLibrary if available; fall back to tier-1 if not.
+	var t = get_tree()
+	var promoted_to: int = f.current_tier
+	if t != null:
+		var lib = t.root.get_node_or_null("EntityLibrary")
+		if lib != null:
+			var bdef = lib.building(build_id)
+			if bdef != null:
+				# Apply supply provided + deposit_point side-effects.
+				if int(bdef.supply_provided) > 0:
+					f.supply_max += int(bdef.supply_provided)
+				# Tier-up only for tech-category buildings of higher tier.
+				if String(bdef.category) == "tech" and int(bdef.tech_tier) > f.current_tier:
+					f.current_tier = int(bdef.tech_tier)
+					promoted_to = f.current_tier
+	return {"ok": true, "tier": f.current_tier, "promoted_to": promoted_to}
 
 # --- Test helper ---
 func _reset_for_test() -> void:
