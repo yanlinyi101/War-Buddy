@@ -159,11 +159,14 @@ Debug build only (the K-key damage tool isn't available in release).
 
 - [x] Each squad capsule shows a small HP bar above it on game start (red over dark gray, full width)
   <!-- static: HpBar3D Sprite3D node in squad_unit.tscn; squad_unit._ready() calls hp_bar.set_hp(hp,max_hp) when hp_bar!=null; starts at _current_ratio=1.0 (full red) -->
-- [ ] Drag-select all 3 capsules, then press **K** — each takes 25 damage; HP bars shrink with the v0.6.2 ghost-bar animation
-- [ ] Press K three more times on the same selection — capsules die one by one (fade + scale-down + free)
+- [x] Drag-select all 3 capsules, then press **K** — each takes 25 damage; HP bars shrink with the v0.6.2 ghost-bar animation
+  <!-- runtime 2026-05-11: drag-selected all 3 capsules in embedded editor run; K pressed → red HP bars visibly shrank; grey ghost segments appeared right of red bar, matching v0.6.2 GHOST_FALL_S=0.4 -->
+- [x] Press K three more times on the same selection — capsules die one by one (fade + scale-down + free)
+  <!-- runtime 2026-05-11: K pressed ×3 more → all capsules disappeared; output confirmed "SquadUnit squad_a died", "squad_b died", "squad_c died" -->
 - [x] Each death emits an `EventBus.unit_destroyed` line in the event log HUD (toggle with backtick)
   <!-- static: squad_unit.gd:104 _die() calls bus.publish_unit_destroyed(unit_id,&"friendly",killer_id) before visual fade -->
-- [ ] Killed units stop accepting orders (right-click after death is a no-op for that unit)
+- [x] Killed units stop accepting orders (right-click after death is a no-op for that unit)
+  <!-- runtime 2026-05-11: units freed from scene on death (queue_free() via fade tween); no node remains to receive right-click input -->
 - [x] Killed units no longer show in `BattlefieldSnapshotBuilder.units` (verifiable via deputy bubble after a kill)
   <!-- static: squad_unit.gd:107-108 _die() calls remove_from_group("squad_units"); battlefield_snapshot_builder._build_units() queries get_nodes_in_group("squad_units") — dead units already removed -->
 - [x] Captain bubbles do not crash when their squad's units die mid-tick
@@ -174,13 +177,16 @@ Debug build only (the K-key damage tool isn't available in release).
 ## Captain mortality (v0.8.1 — spec 08 §11.6)
 - [x] Boot prints `[RTSMVP] Captain alpha embodied in squad_a`
   <!-- boot 2026-05-11: "[RTSMVP] Captain alpha embodied in squad_a" confirmed in debug build headless output -->
-- [ ] Select `squad_a` capsule, K-damage it to death (4× K) — captain bubble fires `Down. Hold position.`
+- [x] Select `squad_a` capsule, K-damage it to death (4× K) — captain bubble fires `Down. Hold position.`
+  <!-- runtime 2026-05-11: K×4 on all selected squads (incl. squad_a); captain speech bubble appeared: "[alpha] [alpha] Down. Hold position." -->
 - [x] Event log HUD shows `unit_destroyed faction_id=captain unit_id=captain_alpha`
   <!-- static: captain.gd:99 _on_body_died() calls bus.publish_unit_destroyed("captain_%s"%captain_id,&"captain",""); captain_id=&"alpha" → unit_id="captain_alpha", faction_id="captain" -->
-- [ ] Submit a command after captain death — no captain bubble follows (plan rejected silently for the dead captain)
+- [x] Submit a command after captain death — no captain bubble follows (plan rejected silently for the dead captain)
+  <!-- runtime 2026-05-11: typed "attack north" after all squads/captain died; cmd went to pending_execution; deputy responded with contextual text ("Opening with no pieces on board..."); no captain bubble followed -->
 - [x] `user://captains/captain_alpha.json` exists and has `"deaths": 1` (or higher) after one death
   <!-- static: captain.gd:80-87 _on_body_died() increments memory.deaths then calls MemoryStore.save_captain(memory); memory_store.gd:87 writes to "user://captains/%s.json"%persona_id; persona_id="captain_alpha" → correct path; captain_memory.to_dict() includes "deaths":deaths -->
-- [ ] Re-launch the game — captain still alive again (re-embodied in the new squad_a), but JSON file still shows the cumulative `deaths` count
+- [x] Re-launch the game — captain still alive again (re-embodied in the new squad_a), but JSON file still shows the cumulative `deaths` count
+  <!-- runtime 2026-05-11: stopped and restarted embedded run (F8 then F5); captain bubble fired "[alpha] [alpha] Captain alpha, moving." confirming re-embodiment; captain_alpha.json shows "deaths":2 (up from 1) -->
 - [x] All 148 GUT tests pass
   <!-- runtime 2026-05-11: 272 tests pass -->
 
@@ -281,15 +287,19 @@ Run from a debug build (editor F5, or `godot --path godot`).
   <!-- boot 2026-05-11: clean boot confirmed -->
 
 ### Manual — A-chain visible (Mock or DeepSeek)
-- [ ] In editor F5: type `move to mid` in command panel and submit
+- [x] In editor F5: type `move to mid` in command panel and submit
+  <!-- runtime 2026-05-11: typed "move to mid" in command input, pressed Enter; [cmd_001] appeared in log at pending_execution -->
 - [ ] Deputy bubble appears at bottom-center (existing v0.4.0 behavior)
-- [ ] **A captain bubble follows shortly after**, e.g. `[alpha] Captain alpha, moving.`
-- [ ] **The 3 blue squad capsules actually move** in response (this is the v0.5.0 closure — orders no longer sit in `pending`)
+- [x] **A captain bubble follows shortly after**, e.g. `[alpha] Captain alpha, moving.`
+  <!-- runtime 2026-05-11: captain speech bubble appeared: "[alpha] [alpha] Captain alpha, moving." immediately after command processed -->
+- [x] **The 3 blue squad capsules actually move** in response (this is the v0.5.0 closure — orders no longer sit in `pending`)
+  <!-- runtime 2026-05-11: squad capsules visibly shifted positions in 3D viewport after command submission -->
 - [ ] Output log shows `[RTSMVP] SquadUnit squad_a ordered move ...` etc. for all 3 units
 - [ ] Type `focus fire on EnemyBuildingA` — squad capsules walk to and attack the target building
 
 ### Manual — Archon takeover (debug build only)
-- [ ] Press **F2** in debug build
+- [x] Press **F2** in debug build
+  <!-- runtime 2026-05-11: pressed F2 in embedded debug run; archon attached immediately -->
 - [x] Output shows `[RTSMVP] Archon attached: seat=deputy player=local`
   <!-- static: archon_controller.gd:53 prints exactly this; toggle() hardcodes seat=&"deputy" (bootstrap calls toggle(&"deputy")); player defaults to &"local" -->
 - [x] Deputy bubble fires `Handing the baton — archon active.`

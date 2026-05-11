@@ -36,20 +36,6 @@ window/stretch/mode="canvas_items"
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
-[layer_names]
-
-3d_physics/layer_1="terrain"
-3d_physics/layer_2="enemy_structure"
-3d_physics/layer_3="friendly_unit"
-3d_physics/layer_4="hero"
-3d_physics/layer_5="enemy_unit"
-3d_physics/layer_6="friendly_structure"
-3d_physics/layer_7="corpse"
-3d_physics/layer_8="soul"
-3d_physics/layer_9="attack_hitbox_player"
-3d_physics/layer_10="attack_hitbox_enemy"
-3d_physics/layer_11="cursor_pick"
-
 [input]
 
 command_submit={
@@ -87,3 +73,22 @@ camera_follow_toggle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
 ]
 }
+
+[layer_names]
+
+3d_physics/layer_1="terrain"
+3d_physics/layer_2="enemy_structure"
+3d_physics/layer_3="friendly_unit"
+3d_physics/layer_4="hero"
+3d_physics/layer_5="enemy_unit"
+3d_physics/layer_6="friendly_structure"
+3d_physics/layer_7="corpse"
+3d_physics/layer_8="soul"
+3d_physics/layer_9="attack_hitbox_player"
+3d_physics/layer_10="attack_hitbox_enemy"
+3d_physics/layer_11="cursor_pick"
+
+[rendering]
+
+renderer/rendering_method="compatibility"
+renderer/rendering_method.mobile="compatibility"

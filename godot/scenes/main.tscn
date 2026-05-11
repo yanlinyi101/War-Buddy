@@ -10,7 +10,7 @@ script = ExtResource("2_bootstrap")
 
 [node name="World" parent="." unique_id=96283415 instance=ExtResource("1_world")]
 unique_name_in_owner = true
-transform = Transform3D(0.99984616, 0.01753966, 0, -0.01753966, 0.99984616, 0, 0, 0, 1, 1.830297, 1.7507162, -4.207573)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="HudRoot" type="CanvasLayer" parent="." unique_id=125545914]
 unique_name_in_owner = true
