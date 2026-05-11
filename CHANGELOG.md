@@ -2,6 +2,19 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.13.1] — 2026-05-10
+
+### Added
+- **Mock fixture library (spec 12 §6.3)** — `tests/fixtures/mock_plans/`:
+  - `attack_b4.tres` — combat plan with a single `attack` order targeting `EnemyBuildingA` (landmark).
+  - `eco_boost.tres` — eco plan with a `build` order carrying `build_id=supply_depot` in `params`.
+  - `refusal_hold_fire.tres` — orderless plan (rationale-only "refusal" pattern).
+- 5 new GUT cases (`test_mock_fixtures`) — load all three, verify key fields, round-trip through `ActionPlan.to_dict / from_dict` so a future spec 07 schema break breaks the fixtures in CI. Total: **269/269** green.
+
+### Notes
+- Fixtures are pure data — they don't run their own LLM call. Tests inject the loaded `ActionPlan` into `Deputy.handle_plan` or `CommandBus.submit_plan` directly to exercise downstream code paths against canned input.
+- Spec 12 §6.1 "CI never calls real LLM providers" remains honored — DeepseekClient / AnthropicClient stay out of automated runs.
+
 ## [v0.13.0] — 2026-05-10
 
 ### Added

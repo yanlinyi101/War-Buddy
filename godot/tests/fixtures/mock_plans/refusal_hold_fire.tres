@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://mockplanrefusal"]
+
+[ext_resource type="Script" path="res://scripts/command/action_plan.gd" id="1_plan"]
+
+[resource]
+script = ExtResource("1_plan")
+id = &"fix_plan_refusal"
+deputy = &"deputy"
+tier = 0
+rationale = "Holding position — exposing flank now would lose the line."
+confidence = 0.95
+triggering_utterance = "push through"
+orders = []

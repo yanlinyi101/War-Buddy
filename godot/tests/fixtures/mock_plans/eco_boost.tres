@@ -1,0 +1,31 @@
+[gd_resource type="Resource" load_steps=3 format=3 uid="uid://mockplanecoboost"]
+
+[ext_resource type="Script" path="res://scripts/command/action_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://scripts/command/tactical_order.gd" id="2_order"]
+
+[sub_resource type="Resource" id="Order_build_depot"]
+script = ExtResource("2_order")
+id = &"fix_eco_build_1"
+type_id = &"build"
+origin = 1
+issuer = 1
+deputy = &"deputy"
+target_position = Vector3(5, 0, 5)
+target_kind = &"position"
+target_grid = Vector2i(-1, -1)
+params = {"build_id": "supply_depot", "position": Vector3(5, 0, 5)}
+posture = &"hold_fire"
+priority = 0
+queue_mode = &"replace"
+status = &"pending"
+parent_intent_id = &"fix_plan_eco_boost"
+
+[resource]
+script = ExtResource("1_plan")
+id = &"fix_plan_eco_boost"
+deputy = &"deputy"
+tier = 1
+rationale = "Adding supply headroom."
+confidence = 0.80
+triggering_utterance = "eco boost"
+orders = [SubResource("Order_build_depot")]

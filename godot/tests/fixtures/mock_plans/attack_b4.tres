@@ -1,0 +1,31 @@
+[gd_resource type="Resource" load_steps=3 format=3 uid="uid://mockplanattackb4"]
+
+[ext_resource type="Script" path="res://scripts/command/action_plan.gd" id="1_plan"]
+[ext_resource type="Script" path="res://scripts/command/tactical_order.gd" id="2_order"]
+
+[sub_resource type="Resource" id="Order_attack_b4"]
+script = ExtResource("2_order")
+id = &"fix_attack_1"
+type_id = &"attack"
+origin = 1
+issuer = 1
+deputy = &"deputy"
+target_kind = &"landmark"
+target_landmark = &"EnemyBuildingA"
+target_position = Vector3(0, 0, 0)
+target_grid = Vector2i(-1, -1)
+posture = &"aggressive"
+priority = 10
+queue_mode = &"replace"
+status = &"pending"
+parent_intent_id = &"fix_plan_attack_b4"
+
+[resource]
+script = ExtResource("1_plan")
+id = &"fix_plan_attack_b4"
+deputy = &"deputy"
+tier = 0
+rationale = "Engaging target at B4."
+confidence = 0.85
+triggering_utterance = "attack B4"
+orders = [SubResource("Order_attack_b4")]
