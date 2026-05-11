@@ -266,16 +266,25 @@ func _spawn_squad_units() -> void:
 		unit.add_to_group("squad_alpha")
 
 func _register_core_order_types() -> void:
+	# Spec 07 core verbs (5) + spec 09 §9 extensions (7) = 12 type_ids.
 	var defs = [
 		_make_def(&"move", {}, [], 1),
 		_make_def(&"attack", {}, [], 1),
 		_make_def(&"stop", {}, [], 0),
 		_make_def(&"hold", {}, [], 0),
 		_make_def(&"use_skill", {"skill_id": "string"}, [], 0),
+		# --- 09 §9 economy / production verbs ---
+		_make_def(&"gather", {"node_id": "string"}, [], 0),
+		_make_def(&"return_cargo", {}, [], 0),
+		_make_def(&"build", {"build_id": "string", "position": "vector3"}, [], 0),
+		_make_def(&"train", {"unit_id": "string", "count": "int"}, [], 0),
+		_make_def(&"research", {"research_id": "string"}, [], 0),
+		_make_def(&"set_rally", {"position": "vector3"}, [], 0),
+		_make_def(&"cancel_production", {"queue_index": "int"}, [], 0),
 	]
 	for d in defs:
 		OrderTypeRegistry.register(d)
-	print("[RTSMVP] OrderTypeRegistry: registered %d core types" % defs.size())
+	print("[RTSMVP] OrderTypeRegistry: registered %d order types" % defs.size())
 
 func _make_def(id: StringName, schema: Dictionary, deputies: Array, min_targets: int):
 	var d = RegistryScript.TypeDef.new()

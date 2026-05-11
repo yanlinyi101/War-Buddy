@@ -2,6 +2,17 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.2] — 2026-05-10
+
+### Added
+- **Doc 09 §9 OrderTypeRegistry extension** — 7 new order types registered on bootstrap: `gather` (worker → resource node), `return_cargo`, `build` (worker → place a building), `train` (production building → queue a unit), `research`, `set_rally`, `cancel_production`. Combined with spec 07's 5 core verbs, the registry now holds **12** order types.
+- Each new type ships its param schema (e.g. `build` requires `build_id: string` and `position: vector3`; `gather` requires `node_id: string`) so `CommandBus.submit_orders` rejects malformed orders before they hit any executor.
+- 5 new GUT cases (`test_order_types_09`). Total: **177/177** green.
+- Headless boot log line updated from "registered 5 core types" to **"registered 12 order types"**.
+
+### Notes
+- No executor exists yet for the 7 new verbs — `OrderExecutor` only handles `move`/`attack`/`stop`/`hold`. Submitting `gather` or `build` accepts at the bus and emits `order_issued`, but executors no-op. v0.9.3 adds the worker gather loop; `train` / `research` / `set_rally` / `cancel_production` ship with the production-building runtime in v0.9.3+.
+
 ## [v0.9.1] — 2026-05-10
 
 ### Added
