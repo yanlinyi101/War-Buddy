@@ -2,6 +2,16 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.6] — 2026-05-10
+
+### Added
+- **Captain stat reinforcement (doc 09 §8.3, closes spec 08 §11.6 loop)** — `scripts/combat/captain_reinforcement.gd` exposes `CaptainReinforcement.apply(unit_def, memory)` which duplicates the UnitDef and applies one axis (`hp` / `dps` / `sight` / `speed`) according to `CaptainMemory.preferred_axis` × `reinforcement_pct`. The DPS axis bumps `dmg` *and* shrinks `attack_period_seconds` (both directions contribute). The returned UnitDef gets `agency_tier=captain`; the library row stays pristine.
+- 9 new GUT cases (`test_captain_reinforcement`). Total: **213/213** green.
+
+### Notes
+- The cap (`reinforcement_pct ≤ 0.15`) lives in `CaptainMemory.clamp_reinforcement` per spec 08 §11.6 — v0.9.6 trusts its input.
+- No spawner consumes the helper yet. The production pipeline (v0.10) will call `apply()` when summoning a captain alongside its squad. Until then, captain alpha still rides squad_a with vanilla stats.
+
 ## [v0.9.5] — 2026-05-10
 
 ### Added
