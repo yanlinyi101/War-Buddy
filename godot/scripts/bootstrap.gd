@@ -23,6 +23,7 @@ const CaptainScript = preload("res://scripts/ai/captain.gd")
 const ArchonControllerScript = preload("res://scripts/ai/archon_controller.gd")
 const HitstopScript = preload("res://scripts/feel/hitstop.gd")
 const EventLogHudScene = preload("res://scenes/event_log_hud.tscn")
+const NavRecoveryScript = preload("res://scripts/nav_recovery.gd")
 
 @onready var world: Node3D = $World
 @onready var hero = $World/CommanderHero
@@ -43,6 +44,7 @@ var order_executor = null
 var captain = null
 var archon_controller = null
 var hitstop = null
+var hero_nav_recovery = null
 
 func _ready() -> void:
 	_register_core_order_types()
@@ -77,6 +79,13 @@ func _ready() -> void:
 	add_child(hitstop)
 	if hero.has_method("set_hitstop"):
 		hero.set_hitstop(hitstop)
+
+	# v0.8.2: Hero off-nav-mesh recovery (spec 11 §8.1) — guards against
+	# the hero ending up outside the nav mesh from physics edge cases.
+	hero_nav_recovery = NavRecoveryScript.new()
+	hero_nav_recovery.name = "HeroNavRecovery"
+	add_child(hero_nav_recovery)
+	hero_nav_recovery.bind_to(hero)
 
 	hud.bind_hero_state(hero.hero_state)
 	hud.command_submitted.connect(_on_command_submitted)

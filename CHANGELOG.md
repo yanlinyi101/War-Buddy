@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.8.2] — 2026-05-10
+
+### Added
+- **Off-nav-mesh recovery (spec 11 §8.1)** — `NavRecovery` Node attaches to any Node3D and, each physics frame, snaps the target back to the nearest valid nav-mesh point if displacement exceeds 1.5 m for > 3 frames. The 3-frame buffer prevents false positives during legitimate ragdoll-push events. Pushes a warning to console on each recover so authoring bugs surface early.
+- Auto-picks the default 3D nav map; skips queries until the map's iteration_id > 0 (prevents "map query before sync" log spam during headless boot).
+- Bootstrap attaches a `NavRecovery` to the hero on `_ready`.
+- 4 new GUT cases (`test_nav_recovery`) covering no-target, no-nav-map, teleport bookkeeping, and default tunables. Total: **152/152** green.
+
+### Notes
+- §8.2 (isolated-island fallback) and §8.3 (empty-path warn) are out-of-the-box behaviors of Godot's `NavigationAgent3D` plus its `path_postprocessing` mode — no extra code needed in v0.8.2. The smoke checklist covers them as manual checks.
+- Squad units don't get a NavRecovery in v0.8.2 — they're confined to flat terrain by the graybox map. If we add terrain seams or cliffs they'll need one too.
+
 ## [v0.8.1] — 2026-05-10
 
 ### Added
