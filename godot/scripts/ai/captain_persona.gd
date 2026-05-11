@@ -16,3 +16,11 @@ extends Resource
 @export var preferred_model: StringName = &"deepseek-chat"
 @export var snapshot_token_ceiling: int = 500    # vs Deputy's 2000 (spec 08 §11.6)
 @export var autonomous_tick_seconds: float = 8.0 # default K=8s for tick_observe
+
+# Doc 09 §8.2 — categories this persona may lead. Empty = unrestricted.
+@export var eligible_categories: Array[StringName] = []
+
+func can_lead_category(category: StringName) -> bool:
+	if eligible_categories.is_empty():
+		return true
+	return eligible_categories.has(category)

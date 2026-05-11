@@ -2,6 +2,22 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.5] — 2026-05-10
+
+### Added
+- **Doc 09 §8 captain↔squad category binding.**
+  - `CaptainPersona.eligible_categories: Array[StringName]` + `can_lead_category(cat) -> bool`. Empty array means unrestricted (back-compat with `captain_alpha.tres`).
+  - Three new persona files matching spec §8.2:
+    - `captain_combat.tres` — leads `frontline / ranged / siege / caster`.
+    - `captain_econ.tres` — leads `worker` only.
+    - `captain_scout.tres` — leads `scout` only.
+  - `Squad` Resource with `Squad.validate_binding(persona, category) -> {ok, reason}` for spawn-time enforcement.
+- 8 new GUT cases (`test_captain_squad_binding`). Total: **204/204** green.
+
+### Notes
+- No runtime Squad instances yet — the `Squad` Resource is the data shape only. Spawn-time binding fires when the production pipeline (v0.10) summons a captain alongside its squad.
+- `captain_alpha.tres` (v0.5.0) is now considered the "untyped tutorial captain" since it ships without `eligible_categories`. The new typed personas are what live captains will use.
+
 ## [v0.9.4] — 2026-05-10
 
 ### Added
