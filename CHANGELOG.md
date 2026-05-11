@@ -2,6 +2,21 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.0] — 2026-05-10
+
+### Added
+- **Enemy buildings fight back (spec 09 §7 + §4 combat-math slice)** — `EnemyBuilding` gains `attack_range` (6 m), `attack_damage` (10), `attack_interval` (0.85 s), and `attack_enabled` (`@export`). Each frame the building scans `squad_units` group, picks the nearest alive friendly within range, and calls `take_damage(attack_damage, self)`. Cooldown enforced. New `attacked_target(target_id, damage)` signal.
+- **Damage attribution** — `SquadUnit.take_damage(amount, source)` now records the attacker; on death the `EventBus.publish_unit_destroyed` payload's `killer_id` names the attacking entity (building_id, unit_id, or node name in that order).
+- 7 new GUT cases (`test_enemy_attack`) covering nearest-target, out-of-range, dead-unit skip, attack tick, cooldown, attack_enabled flag, destroyed-building no-fire. Total: **163/163** green.
+
+### Changed
+- The combat loop is now real two-sided. Hero / squad attack a building → building deals 10 dmg every 0.85 s back at the closest squad unit in 6 m. Squad HP 100 vs building HP 60 with 20-dps hero + small squad means buildings still go down first, but units start showing damage and can die from extended exposure.
+
+### Notes
+- Targeting is purely range-based. No threat / aggro logic yet (spec 09 §4 hints at it but doesn't define one). When doc-09 §3 unit categories ship, this becomes a per-category targeting policy.
+- No projectile travel — damage applies instantly on the firing tick. Visible muzzle flash / projectile arc deferred until art / VFX layer.
+- Hero is currently invincible (not in `squad_units` group). Hero damage taken is spec 11 §7.2 territory and gates the "big screen shake on hero hit" trigger — paired work for a later slice.
+
 ## [v0.8.3] — 2026-05-10
 
 ### Added

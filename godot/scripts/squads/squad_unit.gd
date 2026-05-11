@@ -48,10 +48,11 @@ func _ready() -> void:
 
 # --- Mortality (v0.8.0) ---
 
-func take_damage(amount: int, _source: Node = null) -> void:
+func take_damage(amount: int, source: Node = null) -> void:
 	if is_dead or amount <= 0:
 		return
 	hp = maxi(0, hp - amount)
+	_last_damage_source = source
 	if hp_bar != null and hp_bar.has_method("set_hp"):
 		hp_bar.set_hp(hp, max_hp)
 	hp_changed.emit(hp, max_hp)
@@ -63,6 +64,8 @@ func take_damage(amount: int, _source: Node = null) -> void:
 			bus.publish_hp_changed(unit_id, hp, max_hp)
 	if hp == 0:
 		_die()
+
+var _last_damage_source: Node = null
 
 func _die() -> void:
 	if is_dead:
@@ -84,7 +87,15 @@ func _die() -> void:
 	if t != null:
 		var bus = t.root.get_node_or_null("EventBus")
 		if bus != null:
-			bus.publish_unit_destroyed(unit_id, &"friendly", "")
+			var killer_id := ""
+			if _last_damage_source != null and is_instance_valid(_last_damage_source):
+				if _last_damage_source.get("building_id") != null:
+					killer_id = String(_last_damage_source.building_id)
+				elif _last_damage_source.get("unit_id") != null:
+					killer_id = String(_last_damage_source.unit_id)
+				else:
+					killer_id = _last_damage_source.name
+			bus.publish_unit_destroyed(unit_id, &"friendly", killer_id)
 	# Remove from the group so OrderExecutor and snapshot queries stop
 	# pointing at a dying unit.
 	if is_in_group("squad_units"):

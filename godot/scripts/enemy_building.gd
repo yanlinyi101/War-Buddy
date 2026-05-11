@@ -3,10 +3,20 @@ class_name EnemyBuilding
 
 signal destroyed(building_id: String)
 signal hp_changed(current_hp: int, max_hp: int)
+signal attacked_target(target_id: String, damage: int)
 
 @export var building_id := "enemy_building"
 @export var max_hp := 60
 @export var faction := "enemy"
+
+# v0.9.0 — defensive turret attack (spec 09 §7 + §4). Buildings now
+# fire at the nearest friendly squad unit within attack_range every
+# attack_interval seconds, dealing attack_damage. Damage source is
+# recorded so unit death events name the attacker.
+@export var attack_range: float = 6.0
+@export var attack_damage: int = 10
+@export var attack_interval: float = 0.85
+@export var attack_enabled: bool = true
 
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var hp_label: Label3D = $HpLabel3D
@@ -19,6 +29,7 @@ const HOVER_FADE_OUT_S := 0.12
 var hp := 60
 var is_destroyed := false
 var _hover_tween: Tween = null
+var _attack_cooldown: float = 0.0
 
 func _ready() -> void:
 	hp = max_hp
@@ -36,6 +47,39 @@ func take_damage(amount: int) -> void:
 	hp_changed.emit(hp, max_hp)
 	if hp == 0:
 		_destroy()
+
+func _process(delta: float) -> void:
+	if is_destroyed or not attack_enabled:
+		return
+	_attack_cooldown = maxf(0.0, _attack_cooldown - delta)
+	if _attack_cooldown > 0.0:
+		return
+	var victim := _find_nearest_friendly_in_range()
+	if victim == null:
+		return
+	if not victim.has_method("take_damage"):
+		return
+	victim.take_damage(attack_damage, self)
+	_attack_cooldown = attack_interval
+	attacked_target.emit(String(victim.get("unit_id")) if victim.get("unit_id") != null else victim.name, attack_damage)
+
+func _find_nearest_friendly_in_range() -> Node:
+	# v0.9.0 simple targeting: nearest squad unit within attack_range.
+	# When friendly_unit faction filtering arrives (09 §2 mirror roster),
+	# this becomes a GameState.units_in_radius call with faction filter.
+	var best: Node = null
+	var best_d := attack_range
+	for u in get_tree().get_nodes_in_group("squad_units"):
+		if u == null or not is_instance_valid(u):
+			continue
+		if u.get("is_dead") != null and u.is_dead:
+			continue
+		if u is Node3D:
+			var d: float = (u as Node3D).global_position.distance_to(global_position)
+			if d < best_d:
+				best_d = d
+				best = u
+	return best
 
 func _on_mouse_entered() -> void:
 	if is_destroyed or hover_ring == null:
