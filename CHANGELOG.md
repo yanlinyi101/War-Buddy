@@ -2,6 +2,16 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.13.2] — 2026-05-10
+
+### Added
+- **Minimal replay viewer scene (spec 12 §7.3)** — `scenes/replay_viewer.tscn` + `scripts/replay/replay_viewer.gd`. `load_match(match_id)` reads the four NDJSON files via `ReplayLogger`'s static API and renders a merged ms-sorted timeline as a scrollable color-coded RichTextLabel (plans gold, orders green, events blue), with the manifest summary above.
+- 3 new GUT cases (`test_replay_viewer`). Total: **272/272** green.
+
+### Notes
+- Programmatic invocation only — `--replay <match_id>` CLI entry (spec §7.4) and the editor dock listing matches under `user://order_log/` are deferred. The scene can be instantiated and `load_match`-called from a debug script today.
+- Visual scrubber / play-pause / map preview / "jump to next failure" controls are deferred. The current viewer is a static timeline dump — useful for post-match analysis right now without a multi-day UI build.
+
 ## [v0.13.1] — 2026-05-10
 
 ### Added

@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://replayviewer"]
+
+[ext_resource type="Script" path="res://scripts/replay/replay_viewer.gd" id="1_viewer"]
+
+[node name="ReplayViewer" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_viewer")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Panel/VBox"]
+text = "Replay — (no match loaded)"
+
+[node name="Summary" type="Label" parent="Panel/VBox"]
+text = "(load a match via load_match(match_id))"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBox"]
+size_flags_vertical = 3
+custom_minimum_size = Vector2(720, 480)
+horizontal_scroll_mode = 0
+
+[node name="EventLog" type="RichTextLabel" parent="Panel/VBox/ScrollContainer"]
+bbcode_enabled = true
+fit_content = true
+scroll_following = false
+size_flags_horizontal = 3
+text = "(empty timeline)"
