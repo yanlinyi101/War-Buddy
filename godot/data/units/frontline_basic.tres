@@ -1,0 +1,26 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://unitfrontlinebasic"]
+
+[ext_resource type="Script" path="res://scripts/combat/unit_def.gd" id="1_unitdef"]
+
+[resource]
+script = ExtResource("1_unitdef")
+unit_id = &"frontline_basic"
+display_name = "Frontline"
+faction_id = &"shared"
+category = &"frontline"
+agency_tier = &"regular"
+max_hp = 125
+armor = 1
+armor_class = &"heavy"
+dmg = 10
+dmg_type = &"normal"
+attack_range = 6.0
+attack_period_seconds = 1.5
+move_speed = 3.15
+sight_range = 10.0
+produced_at = &"barracks"
+supply_cost = 2
+mineral_cost = 100
+gas_cost = 25
+build_time_seconds = 21.0
+tech_tier = 1

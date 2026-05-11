@@ -1,0 +1,28 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://unitsiegebasic"]
+
+[ext_resource type="Script" path="res://scripts/combat/unit_def.gd" id="1_unitdef"]
+
+[resource]
+script = ExtResource("1_unitdef")
+unit_id = &"siege_basic"
+display_name = "Siege"
+faction_id = &"shared"
+category = &"siege"
+agency_tier = &"regular"
+max_hp = 175
+armor = 1
+armor_class = &"heavy"
+dmg = 35
+dmg_type = &"siege"
+attack_range = 7.0
+attack_period_seconds = 2.0
+splash_radius = 1.25
+move_speed = 2.62
+sight_range = 11.0
+produced_at = &"factory"
+supply_cost = 3
+mineral_cost = 150
+gas_cost = 125
+build_time_seconds = 45.0
+tech_tier = 2
+prerequisites = [&"forge"]

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://unitherocommander"]
+
+[ext_resource type="Script" path="res://scripts/combat/unit_def.gd" id="1_unitdef"]
+
+[resource]
+script = ExtResource("1_unitdef")
+unit_id = &"hero_commander"
+display_name = "Commander"
+faction_id = &"shared"
+category = &"hero"
+agency_tier = &"hero"
+max_hp = 600
+armor = 2
+armor_class = &"hero"
+dmg = 25
+dmg_type = &"normal"
+attack_range = 0.0
+attack_period_seconds = 0.75
+move_speed = 4.20
+sight_range = 12.0
+produced_at = &""
+supply_cost = 0
+mineral_cost = 0
+gas_cost = 0
+build_time_seconds = 0.0
+tech_tier = 1

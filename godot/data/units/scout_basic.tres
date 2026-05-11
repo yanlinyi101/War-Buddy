@@ -1,0 +1,26 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://unitscoutbasic"]
+
+[ext_resource type="Script" path="res://scripts/combat/unit_def.gd" id="1_unitdef"]
+
+[resource]
+script = ExtResource("1_unitdef")
+unit_id = &"scout_basic"
+display_name = "Scout"
+faction_id = &"shared"
+category = &"scout"
+agency_tier = &"regular"
+max_hp = 60
+armor = 0
+armor_class = &"light"
+dmg = 4
+dmg_type = &"piercing"
+attack_range = 5.0
+attack_period_seconds = 0.5
+move_speed = 5.25
+sight_range = 14.0
+produced_at = &"barracks"
+supply_cost = 1
+mineral_cost = 50
+gas_cost = 50
+build_time_seconds = 32.0
+tech_tier = 1

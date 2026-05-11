@@ -1,0 +1,28 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://unitcasterbasic"]
+
+[ext_resource type="Script" path="res://scripts/combat/unit_def.gd" id="1_unitdef"]
+
+[resource]
+script = ExtResource("1_unitdef")
+unit_id = &"caster_basic"
+display_name = "Caster"
+faction_id = &"shared"
+category = &"caster"
+agency_tier = &"regular"
+max_hp = 100
+armor = 0
+armor_class = &"light"
+dmg = 10
+dmg_type = &"magic"
+attack_range = 6.0
+attack_period_seconds = 1.5
+move_speed = 3.94
+sight_range = 11.0
+detection = true
+produced_at = &"temple"
+supply_cost = 2
+mineral_cost = 150
+gas_cost = 125
+build_time_seconds = 39.0
+tech_tier = 3
+prerequisites = [&"arcanum"]

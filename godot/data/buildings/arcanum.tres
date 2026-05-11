@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://buildarcanum"]
+
+[ext_resource type="Script" path="res://scripts/combat/building_def.gd" id="1_bdef"]
+
+[resource]
+script = ExtResource("1_bdef")
+build_id = &"arcanum"
+display_name = "Arcanum"
+faction_id = &"shared"
+category = &"tech"
+max_hp = 850
+armor = 1
+armor_class = &"structure"
+mineral_cost = 150
+gas_cost = 200
+build_time_seconds = 50.0
+tech_tier = 3
+prerequisites = [&"forge"]
+size_grid = Vector2i(3, 3)

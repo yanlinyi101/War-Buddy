@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://buildforge"]
+
+[ext_resource type="Script" path="res://scripts/combat/building_def.gd" id="1_bdef"]
+
+[resource]
+script = ExtResource("1_bdef")
+build_id = &"forge"
+display_name = "Forge"
+faction_id = &"shared"
+category = &"tech"
+max_hp = 850
+armor = 1
+armor_class = &"structure"
+mineral_cost = 150
+gas_cost = 100
+build_time_seconds = 35.0
+tech_tier = 2
+size_grid = Vector2i(3, 3)
+research_options = [&"armor_upgrade_1", &"weapon_upgrade_1"]

@@ -22,6 +22,7 @@ MemoryStore="*res://scripts/ai/memory_store.gd"
 GameState="*res://scripts/state/game_state.gd"
 EventBus="*res://scripts/state/event_bus.gd"
 CombatService="*res://scripts/combat/combat_service.gd"
+EntityLibrary="*res://scripts/combat/entity_library.gd"
 
 [display]
 

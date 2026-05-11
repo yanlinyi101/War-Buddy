@@ -1,0 +1,23 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://buildturret"]
+
+[ext_resource type="Script" path="res://scripts/combat/building_def.gd" id="1_bdef"]
+
+[resource]
+script = ExtResource("1_bdef")
+build_id = &"turret"
+display_name = "Turret"
+faction_id = &"shared"
+category = &"defense"
+max_hp = 250
+armor = 1
+armor_class = &"structure"
+mineral_cost = 100
+gas_cost = 0
+build_time_seconds = 30.0
+tech_tier = 2
+prerequisites = [&"forge"]
+size_grid = Vector2i(2, 2)
+defensive = true
+defensive_range = 7.0
+defensive_dmg = 12
+defensive_dmg_type = &"piercing"

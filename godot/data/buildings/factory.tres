@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://buildfactory"]
+
+[ext_resource type="Script" path="res://scripts/combat/building_def.gd" id="1_bdef"]
+
+[resource]
+script = ExtResource("1_bdef")
+build_id = &"factory"
+display_name = "Factory"
+faction_id = &"shared"
+category = &"production"
+max_hp = 1250
+armor = 1
+armor_class = &"structure"
+mineral_cost = 200
+gas_cost = 100
+build_time_seconds = 43.0
+tech_tier = 2
+prerequisites = [&"forge"]
+size_grid = Vector2i(3, 3)
+produces = [&"siege_basic"]

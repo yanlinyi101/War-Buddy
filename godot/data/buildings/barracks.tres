@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://buildbarracks"]
+
+[ext_resource type="Script" path="res://scripts/combat/building_def.gd" id="1_bdef"]
+
+[resource]
+script = ExtResource("1_bdef")
+build_id = &"barracks"
+display_name = "Barracks"
+faction_id = &"shared"
+category = &"production"
+max_hp = 1000
+armor = 1
+armor_class = &"structure"
+mineral_cost = 150
+gas_cost = 0
+build_time_seconds = 46.0
+tech_tier = 1
+size_grid = Vector2i(3, 3)
+produces = [&"frontline_basic", &"ranged_basic", &"scout_basic"]

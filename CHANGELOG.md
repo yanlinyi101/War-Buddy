@@ -2,6 +2,18 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.9.4] — 2026-05-10
+
+### Added
+- **Doc 09 §3.3 unit roster (7 .tres files)** — `worker_basic`, `frontline_basic`, `ranged_basic`, `siege_basic`, `caster_basic`, `scout_basic`, `hero_commander`. Stats pinned to the §3.3 table (Marauder-class frontline 125 HP / heavy / 10 normal, etc.).
+- **Doc 09 §7.3 building roster (9 .tres files)** — `hq`, `supply_depot`, `barracks`, `forge`, `factory`, `arcanum`, `temple`, `refinery`, `turret`. Stats per §7.3 table.
+- **`EntityLibrary` autoload** (`scripts/combat/entity_library.gd`) — scans `data/units/` and `data/buildings/` at boot, indexes by `unit_id` / `build_id`. Lookups: `unit(id)`, `building(id)`, `all_unit_ids()`, `all_building_ids()`, `units_by_category(cat)`, `buildings_by_category(cat)`. Boot log: `[RTSMVP] EntityLibrary: 7 units, 9 buildings loaded`.
+- 9 new GUT cases (`test_entity_library`) pin presence + key stat fields. Total: **196/196** green.
+
+### Notes
+- Loading is greedy at autoload `_ready`; the 16-file roster takes ~5 ms in the headless boot trace.
+- No spawner consumes these defs yet. v0.9.5+ wires UnitDef → CharacterBody3D spawn factory; production buildings (v0.10) read BuildingDef for cost / supply / produces lists.
+
 ## [v0.9.3] — 2026-05-10
 
 ### Added
