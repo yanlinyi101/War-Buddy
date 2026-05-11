@@ -79,6 +79,10 @@ func _ready() -> void:
 	add_child(hitstop)
 	if hero.has_method("set_hitstop"):
 		hero.set_hitstop(hitstop)
+	# Hand the hero the camera so it can request big shake on heavy hits
+	# (spec 11 §7.2).
+	if hero.has_method("set_shake_camera") and rts_camera != null:
+		hero.set_shake_camera(rts_camera)
 
 	# v0.8.2: Hero off-nav-mesh recovery (spec 11 §8.1) — guards against
 	# the hero ending up outside the nav mesh from physics edge cases.

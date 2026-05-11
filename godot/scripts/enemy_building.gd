@@ -83,9 +83,10 @@ func _process(delta: float) -> void:
 	attacked_target.emit(String(victim.get("unit_id")) if victim.get("unit_id") != null else victim.name, final_dmg)
 
 func _find_nearest_friendly_in_range() -> Node:
-	# v0.9.0 simple targeting: nearest squad unit within attack_range.
-	# When friendly_unit faction filtering arrives (09 §2 mirror roster),
-	# this becomes a GameState.units_in_radius call with faction filter.
+	# v0.9.0 simple targeting: nearest squad unit within attack_range;
+	# v0.12.2: fall back to hero (in "heroes" group) when no squad in
+	# range. Hero-priority is intentionally low so squads tank by default
+	# — vision §2.2 "main character feel".
 	var best: Node = null
 	var best_d := attack_range
 	for u in get_tree().get_nodes_in_group("squad_units"):
@@ -98,7 +99,19 @@ func _find_nearest_friendly_in_range() -> Node:
 			if d < best_d:
 				best_d = d
 				best = u
-	return best
+	if best != null:
+		return best
+	# Hero fallback.
+	for h in get_tree().get_nodes_in_group("heroes"):
+		if h == null or not is_instance_valid(h):
+			continue
+		if h.get("is_dead") != null and h.is_dead:
+			continue
+		if h is Node3D:
+			var d: float = (h as Node3D).global_position.distance_to(global_position)
+			if d <= attack_range:
+				return h
+	return null
 
 func _on_mouse_entered() -> void:
 	if is_destroyed or hover_ring == null:

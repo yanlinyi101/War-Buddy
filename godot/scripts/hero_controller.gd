@@ -2,6 +2,9 @@ extends CharacterBody3D
 class_name HeroController
 
 signal target_selected(target)
+signal hp_changed(current: int, maximum: int)
+signal died(unit_id: String)
+signal respawned()
 
 # Movement tunables (spec 11 §4) — exposed on the inspector so playtest
 # values can be iterated without touching code.
@@ -24,6 +27,20 @@ const ATTACK_INTERVAL := 0.75
 @export var ground_collision_mask := 1
 @export var target_collision_mask := 2
 
+# v0.12.2 — hero mortality (spec 09 §3.3 / §10.3). HP & combat-math
+# fields mirror SquadUnit so CombatService routes uniformly.
+@export var max_hp: int = 600
+@export var armor: int = 2
+@export var armor_class: StringName = &"hero"
+@export var dmg_type: StringName = &"normal"
+@export var dmg: int = 25
+@export var respawn_seconds: float = 30.0
+
+var hp: int = 600
+var is_dead: bool = false
+var _respawn_timer: float = 0.0
+var _spawn_position: Vector3 = Vector3.ZERO
+
 @onready var hero_state = $HeroState
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var camera: Camera3D = get_viewport().get_camera_3d()
@@ -41,6 +58,79 @@ func set_hitstop(h) -> void:
 func _ready() -> void:
 	move_target = global_position
 	nav_agent.target_position = global_position
+	hp = max_hp
+	_spawn_position = global_position
+	add_to_group("heroes")
+	hp_changed.emit(hp, max_hp)
+
+# --- Mortality (v0.12.2, spec 09 §10.3) ---
+
+var _camera_for_shake: Camera3D = null    # injected by bootstrap
+
+func set_shake_camera(cam: Camera3D) -> void:
+	_camera_for_shake = cam
+
+func take_damage(amount: int, source: Node = null) -> void:
+	if is_dead or amount <= 0 or input_locked:
+		return
+	hp = maxi(0, hp - amount)
+	hp_changed.emit(hp, max_hp)
+	# Spec 11 §7.2 — big screen shake on hero taking >10 % max HP in one hit.
+	var hit_fraction := float(amount) / float(maxi(1, max_hp))
+	if _camera_for_shake != null and _camera_for_shake.has_method("shake") and hit_fraction > 0.10:
+		_camera_for_shake.shake(0.6, 0.35)
+	# EventBus broadcast
+	var t = get_tree()
+	if t != null:
+		var bus = t.root.get_node_or_null("EventBus")
+		if bus != null:
+			bus.publish_hp_changed("hero_commander", hp, max_hp)
+	# Source param accepted for future killer attribution
+	var _src = source
+	if hp == 0:
+		_die()
+
+func _die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	input_locked = true
+	clear_target()
+	has_move_target = false
+	velocity = Vector3.ZERO
+	_respawn_timer = respawn_seconds
+	visible = false
+	if has_node("CollisionShape3D"):
+		$CollisionShape3D.disabled = true
+	died.emit("hero_commander")
+	var t = get_tree()
+	if t != null:
+		var bus = t.root.get_node_or_null("EventBus")
+		if bus != null:
+			bus.publish_unit_destroyed("hero_commander", &"hero", "")
+	if _camera_for_shake != null and _camera_for_shake.has_method("shake"):
+		_camera_for_shake.shake(1.2, 0.8)
+	print("[RTSMVP] Hero died — respawning in %.1fs" % respawn_seconds)
+
+func _try_respawn(delta: float) -> void:
+	if not is_dead:
+		return
+	_respawn_timer = maxf(0.0, _respawn_timer - delta)
+	if _respawn_timer <= 0.0:
+		_respawn()
+
+func _respawn() -> void:
+	is_dead = false
+	input_locked = false
+	hp = max_hp
+	visible = true
+	if has_node("CollisionShape3D"):
+		$CollisionShape3D.disabled = false
+	global_position = _spawn_position
+	nav_agent.target_position = global_position
+	hp_changed.emit(hp, max_hp)
+	respawned.emit()
+	print("[RTSMVP] Hero respawned at %s" % _spawn_position)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:
@@ -56,6 +146,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			hero_state.set_action("Idle")
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		_try_respawn(delta)
+		return
 	if input_locked:
 		velocity = Vector3.ZERO
 		move_and_slide()

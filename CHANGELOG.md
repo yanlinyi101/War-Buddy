@@ -2,6 +2,19 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.12.2] — 2026-05-10
+
+### Added
+- **Hero mortality (doc 09 §10.3)** — `HeroController` gains `max_hp` (600, matches §3.3), `hp`, `is_dead`, `take_damage`, `_die`, `_respawn`, and a 30 s default `respawn_seconds`. Hero gets `armor_class=hero`, `armor=2`, `dmg=25`, `dmg_type=normal` so `CombatService` routes uniformly.
+- **Big screen shake on heavy hits (spec 11 §7.2)** — when a single hit removes > 10 % max HP, the camera fires a stronger shake (`0.6 / 0.35 s`). On death the camera fires the biggest shake (`1.2 / 0.8 s`).
+- **EnemyBuilding target priority (v0.12.2 extension)** — buildings still prioritize squad units; when no squad is in range, the building falls back to the hero (in the new `heroes` group). Preserves "main-character feel" — buildings only shoot the hero when nothing else is in range.
+- **Hero respawn** — on death the hero is hidden + collision-disabled, a timer counts down `respawn_seconds`, then re-appears at the spawn position (graybox uses hero's start position; doc 09 §10.3 says "main base" but the graybox has no player HQ yet).
+- 6 new GUT cases (`test_hero_mortality`). Total: **256/256** green.
+
+### Notes
+- Hero is **not a loss condition** per spec 09 §10.3 — victory remains "destroy all enemy buildings". Hero dying just locks input until respawn.
+- Soul VFX (spec 11 §3) and ragdoll (§3.2) are still deferred to a polish pass. Current death visual is just `visible = false`.
+
 ## [v0.12.1] — 2026-05-10
 
 ### Added
