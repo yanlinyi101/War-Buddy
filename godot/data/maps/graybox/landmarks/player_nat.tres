@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_player_nat"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"player_nat"
+display_name = "player nat"
+aliases = ["natural", "second", "nat", "分矿", "我的分"]
+grid_cells = ["D8"]
+world_center = Vector3(-14.0, 0.0, 8.0)

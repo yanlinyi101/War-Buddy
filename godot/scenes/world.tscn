@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://worldscene"]
+[gd_scene load_steps=18 format=3 uid="uid://worldscene"]
 
 [ext_resource type="PackedScene" path="res://scenes/commander_hero.tscn" id="1_hero"]
 [ext_resource type="Script" path="res://scripts/rts_camera.gd" id="3_camera"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/worker.tscn" id="6_worker"]
 [ext_resource type="PackedScene" path="res://scenes/mineral_patch.tscn" id="7_mineral"]
 [ext_resource type="PackedScene" path="res://scenes/gas_geyser.tscn" id="8_gas"]
+[ext_resource type="PackedScene" path="res://scenes/gold_patch.tscn" id="9_gold"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(60, 60)
@@ -21,6 +22,28 @@ agent_radius = 0.75
 agent_height = 1.75
 cell_size = 0.25
 cell_height = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform_player"]
+size = Vector3(16, 3, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_platform_player"]
+size = Vector3(16, 3, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_platform_enemy"]
+size = Vector3(16, 3, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_platform_enemy"]
+size = Vector3(16, 3, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plateau"]
+size = Vector3(8, 1.5, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_plateau"]
+size = Vector3(8, 1.5, 8)
+
+[sub_resource type="StandardMaterial3D" id="Material_cliff"]
+albedo_color = Color(0.45, 0.42, 0.38, 1)
+roughness = 0.85
 
 [node name="World" type="Node3D"]
 
@@ -40,8 +63,44 @@ shape = SubResource("BoxShape3D_ground")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground"]
 mesh = SubResource("PlaneMesh_ground")
 
+[node name="PlatformPlayer" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.5, 22)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlatformPlayer"]
+shape = SubResource("BoxShape3D_platform_player")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PlatformPlayer"]
+mesh = SubResource("BoxMesh_platform_player")
+material_override = SubResource("Material_cliff")
+
+[node name="PlatformEnemy" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 1.5, -22)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlatformEnemy"]
+shape = SubResource("BoxShape3D_platform_enemy")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PlatformEnemy"]
+mesh = SubResource("BoxMesh_platform_enemy")
+material_override = SubResource("Material_cliff")
+
+[node name="CentralPlateau" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CentralPlateau"]
+shape = SubResource("BoxShape3D_plateau")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CentralPlateau"]
+mesh = SubResource("BoxMesh_plateau")
+material_override = SubResource("Material_cliff")
+
 [node name="CommanderHero" parent="." instance=ExtResource("1_hero")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.75, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.75, 12)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 30, 0)
@@ -55,103 +114,155 @@ min_ortho_size = 12.0
 max_ortho_size = 60.0
 
 [node name="PlayerHq" parent="." instance=ExtResource("4_phq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 2, 22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 5, 22)
 
 [node name="EnemyHq" parent="." instance=ExtResource("5_ehq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 2, -22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 5, -22)
 
 [node name="Worker_0" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0.5, 19)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 3.5, 19)
 unit_id = "worker_0"
 
 [node name="Worker_1" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.5, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 3.5, 18)
 unit_id = "worker_1"
 
 [node name="Worker_2" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.5, 17.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 3.5, 17.5)
 unit_id = "worker_2"
 
 [node name="Worker_3" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.5, 17.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 3.5, 17.5)
 unit_id = "worker_3"
 
 [node name="Worker_4" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.5, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3.5, 18)
 unit_id = "worker_4"
 
 [node name="Worker_5" parent="." instance=ExtResource("6_worker")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0.5, 19)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 3.5, 19)
 unit_id = "worker_5"
 
 [node name="Mineral_P_0" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.5, 16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 3.5, 24)
 node_id = &"mineral_p0"
 
 [node name="Mineral_P_1" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.5, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 3.5, 25)
 node_id = &"mineral_p1"
 
 [node name="Mineral_P_2" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.5, 14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 3.5, 26)
 node_id = &"mineral_p2"
 
 [node name="Mineral_P_3" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.5, 14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 3.5, 27)
 node_id = &"mineral_p3"
 
 [node name="Mineral_P_4" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.5, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 3.5, 27)
 node_id = &"mineral_p4"
 
 [node name="Mineral_P_5" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.5, 16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3.5, 26)
 node_id = &"mineral_p5"
 
 [node name="Mineral_P_6" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.5, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 3.5, 25)
 node_id = &"mineral_p6"
 
 [node name="Mineral_P_7" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.5, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 3.5, 23)
 node_id = &"mineral_p7"
 
 [node name="Gas_P_0" parent="." instance=ExtResource("8_gas")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 1.5, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 4.5, 28)
 node_id = &"gas_p0"
 
+[node name="Mineral_PN_0" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0.5, 6)
+node_id = &"player_nat_m0"
+
+[node name="Mineral_PN_1" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.5, 5)
+node_id = &"player_nat_m1"
+
+[node name="Mineral_PN_2" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.5, 6)
+node_id = &"player_nat_m2"
+
+[node name="Mineral_PN_3" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0.5, 8)
+node_id = &"player_nat_m3"
+
+[node name="Mineral_PN_4" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.5, 10)
+node_id = &"player_nat_m4"
+
+[node name="Mineral_PN_5" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.5, 11)
+node_id = &"player_nat_m5"
+
 [node name="Mineral_E_0" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.5, -16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 3.5, -24)
 node_id = &"mineral_e0"
 
 [node name="Mineral_E_1" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.5, -15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3.5, -25)
 node_id = &"mineral_e1"
 
 [node name="Mineral_E_2" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.5, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 3.5, -26)
 node_id = &"mineral_e2"
 
 [node name="Mineral_E_3" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.5, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 3.5, -27)
 node_id = &"mineral_e3"
 
 [node name="Mineral_E_4" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.5, -15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 3.5, -27)
 node_id = &"mineral_e4"
 
 [node name="Mineral_E_5" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.5, -16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.5, -26)
 node_id = &"mineral_e5"
 
 [node name="Mineral_E_6" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, -18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 3.5, -25)
 node_id = &"mineral_e6"
 
 [node name="Mineral_E_7" parent="." instance=ExtResource("7_mineral")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.5, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 3.5, -23)
 node_id = &"mineral_e7"
 
 [node name="Gas_E_0" parent="." instance=ExtResource("8_gas")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 1.5, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 4.5, -28)
 node_id = &"gas_e0"
+
+[node name="Mineral_EN_0" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.5, -6)
+node_id = &"enemy_nat_m0"
+
+[node name="Mineral_EN_1" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.5, -5)
+node_id = &"enemy_nat_m1"
+
+[node name="Mineral_EN_2" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.5, -6)
+node_id = &"enemy_nat_m2"
+
+[node name="Mineral_EN_3" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.5, -8)
+node_id = &"enemy_nat_m3"
+
+[node name="Mineral_EN_4" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.5, -10)
+node_id = &"enemy_nat_m4"
+
+[node name="Mineral_EN_5" parent="." instance=ExtResource("7_mineral")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.5, -11)
+node_id = &"enemy_nat_m5"
+
+[node name="GoldMine" parent="." instance=ExtResource("9_gold")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+node_id = &"gold_mine"

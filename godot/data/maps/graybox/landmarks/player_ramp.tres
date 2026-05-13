@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_player_ramp"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"player_ramp"
+display_name = "player ramp"
+aliases = ["my ramp", "the choke", "ramp", "坡口", "我的坡"]
+grid_cells = ["C9"]
+world_center = Vector3(-18.0, 0.0, 12.0)

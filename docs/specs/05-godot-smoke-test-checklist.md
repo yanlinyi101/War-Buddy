@@ -343,3 +343,33 @@ Console / log:
   <!-- headless boot: confirmed present in output -->
 - [x] All **290** GUT tests pass
   <!-- headless GUT run: 290 passed, 0 failed -->
+
+## v0.15.1 terrain DNA (per `v0.15.1-terrain-and-landmarks-plan.md`)
+
+Visual on F5 boot:
+
+- [ ] Player main base is on a **raised platform** (Y≈3 m, lighter-grey block visible)
+- [ ] Mirror platform at NE for the enemy
+- [ ] At map center, an **8×8 m mid-elevation platform** holds a **yellow-gold patch** (the central gold mine)
+- [ ] **6 mineral patches** arc at low ground just outside the player ramp area (player nat)
+- [ ] Mirror nat geometry exists in the NE corner
+- [ ] Hero spawn at the bottom of the player ramp (~`(-18, 0.75, 12)`), not on the platform top
+- [ ] HQ / workers / mineral patches / gas geyser all sit on the platform (Y≈3.5–5 m)
+- [ ] Camera frames the larger map cleanly (`size=44`, recentered at origin)
+
+Console / log:
+
+- [ ] Boot prints `[RTSMVP] LandmarkRegistry: 10 landmarks loaded`
+- [ ] Other v0.15.0 boot lines unchanged (worker count, world scale, etc.)
+- [ ] All **309** GUT tests pass
+
+Snapshot (programmatic check):
+
+- [ ] `BattlefieldSnapshotBuilder.build_for(&"player").landmarks` returns 10 entries
+- [ ] Each entry carries `landmark_id`, `display_name`, `grid_cells`, `world_center`
+- [ ] `GameState.resource_nodes(&"gold")` returns the single central gold patch
+
+Known limitations (v0.15.1 graybox):
+
+- Hero may not auto-pathfind up the platform sides (no ramp navmesh-bake yet). v0.15.1.x or v0.15.2 fixes nav-walkable ramps.
+- Workers sit on the platform top but `NavigationAgent3D` paths against the flat ground nav-mesh; they're idle so this is currently moot.

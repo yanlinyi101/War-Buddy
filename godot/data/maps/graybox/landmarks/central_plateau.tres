@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_central_plateau"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"central_plateau"
+display_name = "central plateau"
+aliases = ["temple", "high ground", "middle", "center", "中央", "高地", "中路"]
+grid_cells = ["G7", "F7", "G6", "F6"]
+world_center = Vector3(0.0, 1.5, 0.0)

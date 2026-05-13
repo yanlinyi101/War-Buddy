@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_enemy_main"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"enemy_main"
+display_name = "enemy main"
+aliases = ["enemy base", "their main", "across", "敌方家", "他们的家"]
+grid_cells = ["K2", "J2"]
+world_center = Vector3(22.0, 3.0, -22.0)

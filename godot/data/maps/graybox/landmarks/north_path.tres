@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_north_path"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"north_path"
+display_name = "north path"
+aliases = ["north", "top", "north corridor", "北路", "上路"]
+grid_cells = ["B11", "D11", "F11", "H11", "J11", "L11"]
+world_center = Vector3(0.0, 0.0, 22.0)

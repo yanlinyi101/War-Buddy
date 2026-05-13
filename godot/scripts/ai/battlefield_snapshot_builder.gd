@@ -34,7 +34,18 @@ func build_for(deputy_id: StringName, _tier_hint: StringName = &"") -> Dictionar
 		"available_orders": _available_orders(deputy_id),
 		"tech_state": _build_tech_state(),
 		"economy": _build_economy(),
+		"landmarks": _build_landmarks(),
 	}
+
+func _build_landmarks() -> Array:
+	# Plan v0.15.1 §6.5 — surface designer landmarks to the LLM.
+	var t = get_tree()
+	if t == null:
+		return []
+	var lr = t.root.get_node_or_null("LandmarkRegistry")
+	if lr == null or not lr.has_method("snapshot"):
+		return []
+	return lr.snapshot()
 
 func _build_tech_state() -> Dictionary:
 	# Doc 09 §6.3 — surfaces tech_tier + buildings_completed so the LLM

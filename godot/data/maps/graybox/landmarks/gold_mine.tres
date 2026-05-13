@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://lm_gold_mine"]
+
+[ext_resource type="Script" path="res://scripts/state/landmark.gd" id="1_lm"]
+
+[resource]
+script = ExtResource("1_lm")
+landmark_id = &"gold_mine"
+display_name = "gold mine"
+aliases = ["gold", "rich mine", "center gold", "金矿", "中央金矿"]
+grid_cells = ["G7"]
+world_center = Vector3(0.0, 1.5, 0.0)

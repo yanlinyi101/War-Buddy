@@ -85,11 +85,14 @@ func all_enemy_buildings() -> Array:
 
 func resource_nodes(resource_type: StringName) -> Array:
 	# v0.15.0 — scene-group-backed query for ResourceNodeBody instances.
-	# `resource_type` is "mineral" or "gas"; pass &"" for all.
+	# v0.15.1 — adds &"gold" (the central rich patch on the plateau).
+	# Pass &"" for all categories.
 	if resource_type == &"mineral":
 		return get_tree().get_nodes_in_group("resource_nodes_mineral")
 	if resource_type == &"gas":
 		return get_tree().get_nodes_in_group("resource_nodes_gas")
+	if resource_type == &"gold":
+		return get_tree().get_nodes_in_group("resource_nodes_gold")
 	return get_tree().get_nodes_in_group("resource_nodes")
 
 func enemy_buildings_alive() -> int:

@@ -2,6 +2,31 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.15.1] — 2026-05-13
+
+Terrain DNA per `docs/specs/v0.15.1-terrain-and-landmarks-plan.md`. The graybox replaces flat ground with the three Lost-Temple-soul features: high-ground main platforms, central plateau with gold mine, and a natural-expansion mineral cluster at each main.
+
+### Added
+- **Three-tier elevation** — `world.tscn` gains a 16×3×16 m **player main platform** (top Y=3) at SW, mirror at NE, plus an 8×1.5×8 m **central plateau** (top Y=1.5) at origin. Cliff-grey material (`0.45,0.42,0.38`) sets them apart visually.
+- **Central gold mine** — `scenes/gold_patch.tscn` (yellow-gold, emissive) carries `initial_amount = 3000` and `harvest_amount_per_cycle = 8` (vs regular mineral 1500 / 5). Joins new `resource_nodes_gold` scene group; `GameState.resource_nodes(&"gold")` returns it. `ResourceNodeBody._ready` now classifies `gold` as "depletes=true" alongside `mineral`.
+- **Natural expansions** — 6-mineral nat at low ground per main: player at `(-14, 0, 8)` arc, enemy at `(14, 0, -8)` arc. No gas at the nat (per plan); claiming the nat with a building waits on v0.16.
+- **`Landmark` Resource** (`scripts/state/landmark.gd`) — `landmark_id`, `display_name`, `aliases`, `grid_cells`, `world_center`.
+- **`LandmarkRegistry` autoload** (`scripts/state/landmark_registry.gd`) — scans `res://data/maps/graybox/landmarks/` and indexes by id + every alias (case-insensitive). Boot log: `LandmarkRegistry: 10 landmarks loaded`. Exposes `get_landmark`, `resolve_alias`, `snapshot`.
+- **10 designer-landmark .tres files** — `player_main`, `player_ramp`, `player_nat`, `enemy_main`, `enemy_ramp`, `enemy_nat`, `central_plateau`, `gold_mine`, `north_path`, `south_path`. Each carries English + Chinese aliases ("中央", "金矿", "坡口", "北路" etc.) so the deputy LLM can resolve bilingual utterances.
+- **`MapGrid` Resource** (`scripts/state/map_grid.gd`) + `data/maps/graybox/map_grid.tres` — 12×12 grid over the 60×60 map (5 m per cell), origin SW. Helpers: `world_to_cell(pos) → "G7"`, `cell_to_world("G7") → Vector3`.
+- **`BattlefieldSnapshotBuilder` gains `landmarks` field** — exposes `LandmarkRegistry.snapshot()` to the LLM observation so the deputy can reference named cells.
+- 13 new GUT cases (`test_landmark_registry` 5, `test_grid_resolution` 6, `test_gold_patch` 2, `test_v015_1_world_init` 6). Total: **309/309** green (plan target 296 — beat by 13).
+
+### Changed
+- **Hero spawn** moved from `(-18, 0.75, 18)` → `(-18, 0.75, 12)` (bottom of player ramp, per plan §6.2).
+- **All player-side entities re-anchored to Y=3+**: HQ at `(-22, 5, 22)`, workers at Y=3.5, main minerals at Y=3.5, gas at Y=4.5 (now sitting on the platform top). Same for enemy side mirrored.
+- **Mineral arc** repositioned to fit the 16×16 platform footprint (z range 23–27 instead of 14–20).
+
+### Notes
+- **Graybox limitation**: walkable ramps are not yet baked into the NavigationRegion3D. Platforms are collision-only obstacles for now — the hero can't pathfind onto the platform top; workers spawned on the platform are nav-stranded (idle anyway in v0.15.1, no gather behavior yet). Proper ramp nav-bake lands with v0.15.2 (worker gather loop, which needs walkable paths to/from resources).
+- **Out of scope** (per plan §9): fog of war + sight-range vs elevation, high-ground 50% miss rule, actual nat-HQ construction, 4-slot 2v2 layout, cliff art beyond grey-rock material, watch towers.
+- The `BattlefieldSnapshotBuilder` now surfaces 10 named landmarks to every LLM call — the deputy can finally reason about "守住坡口", "去中央拿金矿", "走北路骚扰" in geometric terms.
+
 ## [v0.15.0] — 2026-05-13
 
 Base setup per `docs/specs/v0.15.0-base-setup-plan.md` — the graybox finally observes "real RTS state" instead of "3 enemy buildings + 1 hero". v0.15.0 ships **placement and identity only**; v0.15.1 layers terrain, v0.15.2 wires the worker gather loop.

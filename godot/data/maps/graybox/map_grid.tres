@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3 uid="uid://graybox_mapgrid"]
+
+[ext_resource type="Script" path="res://scripts/state/map_grid.gd" id="1_mapgrid"]
+
+[resource]
+script = ExtResource("1_mapgrid")
+columns = 12
+rows = 12
+cell_size = Vector2(5.0, 5.0)
+origin_world = Vector3(-30.0, 0.0, -30.0)
