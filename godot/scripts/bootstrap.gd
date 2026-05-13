@@ -253,8 +253,21 @@ func _on_victory_triggered() -> void:
 	if rts_camera != null and rts_camera.has_method("shake"):
 		rts_camera.shake(0.9, 0.6)
 	GameState.mark_victory()
+	# v0.15.0: Deputy memory consolidation (spec 08 §8). Match-time is
+	# read-only on DeputyMemory; this is the single mutation point —
+	# fires once after victory commits.
+	if deputy != null:
+		var killed: int = 0
+		if match_state.get("total_enemy_buildings") != null and match_state.get("enemy_buildings_remaining") != null:
+			killed = int(match_state.total_enemy_buildings) - int(match_state.enemy_buildings_remaining)
+		var summary := {
+			"outcome": "victory",
+			"elapsed_s": GameState.match_elapsed_seconds(),
+			"enemy_buildings_killed": killed,
+		}
+		MemoryStore.consolidate_after_match(deputy.deputy_id, summary, llm_client)
 	EventBus.publish_match_ended("victory", {"elapsed_s": GameState.match_elapsed_seconds()})
-	print("[RTSMVP] Victory triggered")
+	print("[RTSMVP] Victory triggered; deputy memory consolidated")
 
 func _find_squad_unit_by_id(target_id: String) -> Node:
 	for u in get_tree().get_nodes_in_group("squad_units"):

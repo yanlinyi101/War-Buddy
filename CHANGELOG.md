@@ -2,6 +2,24 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.15.0] — 2026-05-13
+
+### Added
+- **Deputy memory consolidation (spec 08 §8)** — `MemoryStore.consolidate_after_match(deputy_id, summary, llm_client = null)` is the single mutation point for `DeputyMemory`. Match-time is read-only per spec invariant; consolidate fires once after victory/defeat commits.
+  - **Match totals** — `total_matches`, `wins`, `losses`, `hours_played` (= elapsed_s / 3600) update from the `summary` dict.
+  - **Trait drift (deterministic)** — every existing trait decays 5 % toward zero each match; outcome adds outcome-specific bumps:
+    - victory → `trust +0.08`, `bond +0.06`
+    - defeat → `trust −0.05`, `frustration +0.04`
+  - All traits clamped to [-1, 1] so repeated bumps saturate cleanly.
+  - **Anecdote synthesis (deterministic)** — generates one ≤80-char in-character line per match (`"Win at 120 s. Took down 3 structures."`). LLM-driven anecdote generation is plumbed through the `llm_client` param but disabled by default to keep CI cost-free.
+  - **Anecdote prune** — keeps the latest 12 (spec cap); front-pops the oldest when exceeded.
+- **Bootstrap wires consolidation on victory** — `_on_victory_triggered` calls `MemoryStore.consolidate_after_match` with `outcome="victory"`, `elapsed_s`, and `enemy_buildings_killed` before publishing `EventBus.match_ended`. Boot log line: `[RTSMVP] Victory triggered; deputy memory consolidated`.
+- 9 new GUT cases (`test_memory_consolidation`) covering total/wins/losses, hours_played accumulation, victory/defeat trait bumps, trait clamp at saturation, anecdote append+length cap, anecdote prune at 12, unknown-outcome no-op. Total: **281/281** green.
+
+### Notes
+- LLM-driven anecdote authoring (the "deputy diary" spec hint) is reserved for a future v0.15.x when the cost trade-off is worth it. Today's deterministic line is short, in-character-appropriate, and good enough for testing the consolidation pipeline end-to-end.
+- Defeat path isn't yet observable in-game (no loss condition; `match_state.victory_triggered` only fires on win). When defeat handling lands (e.g. hero stuck on isolated nav island for > N s), the defeat consolidation branch is already in place.
+
 ## [v0.14.0] — 2026-05-10
 
 ### Added
