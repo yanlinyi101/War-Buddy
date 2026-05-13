@@ -101,8 +101,22 @@ func _ready() -> void:
 	match_state.victory_triggered.connect(_on_victory_triggered)
 
 	_register_enemy_buildings()
+	# v0.15.0 task 4.6 — register player-side friendly_structures with
+	# GameState so HQ's supply_provided lands on FactionState.
+	for fs in get_tree().get_nodes_in_group("friendly_structures"):
+		var bid: StringName = StringName(fs.get("building_def_id")) if fs.get("building_def_id") != null else &""
+		var fid: StringName = StringName(fs.get("faction_id")) if fs.get("faction_id") != null else &"player"
+		if bid != &"":
+			GameState.register_completed_building(fid, bid)
 	_refresh_command_log()
 	hud.update_buildings_remaining(match_state.enemy_buildings_remaining)
+	# v0.15.0 task 4.6 — worker count + world-scale boot log.
+	var worker_count: int = 0
+	for u in get_tree().get_nodes_in_group("squad_units"):
+		if u.get("unit_def_id") != null and StringName(u.unit_def_id) == &"worker_basic":
+			worker_count += 1
+	print("[RTSMVP] World scale: 60x60; player main SW; enemy main NE")
+	print("[RTSMVP] v0.15.0 spawned %d player workers" % worker_count)
 	print("[RTSMVP] Bootstrap: hero=%s hud=%s buildings=%d" % [hero.name, hud.name, match_state.enemy_buildings_remaining])
 
 	selection_set = SelectionSetScript.new()

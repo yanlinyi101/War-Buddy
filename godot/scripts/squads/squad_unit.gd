@@ -18,6 +18,10 @@ const DEATH_FADE_S := 0.4
 @export var armor_class: StringName = &"heavy"
 @export var armor: int = 1
 @export var dmg_type: StringName = &"normal"
+# v0.15.0 — if non-empty, _ready loads this UnitDef from EntityLibrary
+# and overrides the per-export stats above. Lets one scene variant
+# (worker.tscn) drive its numbers from worker_basic.tres.
+@export var unit_def_id: StringName = &""
 @export var debug_log_enabled := true
 const DEBUG_LOG_EVERY_N_FRAMES := 3  # ~20Hz at 60Hz physics
 
@@ -40,6 +44,20 @@ var _last_in_range := false
 @onready var hp_bar: Sprite3D = get_node_or_null("HpBar3D")
 
 func _ready() -> void:
+	# v0.15.0: optionally override per-stat exports from UnitDef before
+	# initializing HP. EntityLibrary may not be mounted in isolated
+	# tests; we skip silently when it's missing.
+	if unit_def_id != &"":
+		var t = get_tree()
+		if t != null:
+			var lib = t.root.get_node_or_null("EntityLibrary")
+			if lib != null:
+				var def = lib.unit(unit_def_id)
+				if def != null:
+					max_hp = int(def.max_hp)
+					armor = int(def.armor)
+					armor_class = StringName(def.armor_class)
+					dmg_type = StringName(def.dmg_type)
 	hp = max_hp
 	_ground_y = global_position.y
 	_move_target = global_position
@@ -50,7 +68,7 @@ func _ready() -> void:
 	if hp_bar != null and hp_bar.has_method("set_hp"):
 		hp_bar.set_hp(hp, max_hp)
 	hp_changed.emit(hp, max_hp)
-	_dlog_event("ready", "pos=%s ground_y=%.3f hp=%d" % [_v2s(global_position), _ground_y, hp])
+	_dlog_event("ready", "pos=%s ground_y=%.3f hp=%d def=%s" % [_v2s(global_position), _ground_y, hp, String(unit_def_id)])
 
 # --- Mortality (v0.8.0) ---
 

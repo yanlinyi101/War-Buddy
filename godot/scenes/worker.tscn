@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3 uid="uid://workerunit"]
+
+[ext_resource type="Script" path="res://scripts/squads/squad_unit.gd" id="1_squad"]
+[ext_resource type="Script" path="res://scripts/feel/hp_bar_3d.gd" id="2_hpbar"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_worker"]
+height = 1.0
+radius = 0.28
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_worker"]
+radius = 0.28
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_worker"]
+albedo_color = Color(0.95, 0.85, 0.2, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ring_worker"]
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="Worker" type="CharacterBody3D"]
+script = ExtResource("1_squad")
+collision_layer = 4
+collision_mask = 3
+unit_def_id = &"worker_basic"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_worker")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_worker")
+material_override = SubResource("StandardMaterial3D_worker")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.4
+target_desired_distance = 0.3
+radius = 0.35
+height = 1.0
+
+[node name="SelectionRing" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, 0)
+size = Vector3(1.1, 1, 1.1)
+texture_albedo = SubResource("GradientTexture2D_ring_worker")
+modulate = Color(0.95, 0.85, 0.2, 1)
+visible = false
+
+[node name="HpBar3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+script = ExtResource("2_hpbar")

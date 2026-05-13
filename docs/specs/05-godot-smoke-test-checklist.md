@@ -313,3 +313,22 @@ Run from a debug build (editor F5, or `godot --path godot`).
 - [ ] LLM path resumes — utterance now produces orders again
 - [x] In a release build, F2 does nothing (toggle is gated on `OS.is_debug_build()`)
   <!-- static: archon_controller.gd:79-81 _unhandled_input() returns immediately if not OS.is_debug_build() -->
+
+## v0.15.0 base setup (per `v0.15.0-base-setup-plan.md`)
+
+Visual on F5 boot:
+
+- [ ] **(a)** One **blue** HQ visible at SW corner (~(-22, 2, 22))
+- [ ] **(b)** **6 yellow worker capsules** arced north of player HQ
+- [ ] **(c)** **8 cyan mineral patches** in an arc above the workers
+- [ ] **(d)** **1 green gas geyser** NW of player HQ
+- [ ] **(e)** One **red** enemy HQ visible at NE corner (~(22, 2, -22)) with **8 mineral + 1 gas mirror** alongside
+- [ ] **(f)** Hero spawn next to player HQ (~(-18, 0.75, 18))
+- [ ] **(g)** Destroying the enemy HQ still triggers victory
+
+Console / log:
+
+- [ ] Boot prints `[RTSMVP] World scale: 60x60; player main SW; enemy main NE`
+- [ ] Boot prints `[RTSMVP] v0.15.0 spawned 6 player workers`
+- [ ] Boot prints `[RTSMVP] Bootstrap: ... buildings=1` (was 3 before — single enemy HQ now)
+- [ ] All **290** GUT tests pass

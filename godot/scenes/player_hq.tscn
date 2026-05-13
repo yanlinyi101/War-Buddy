@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://playerhq"]
+
+[ext_resource type="Script" path="res://scripts/player_hq.gd" id="1_phq"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_hq"]
+size = Vector3(4, 4, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hq"]
+size = Vector3(4, 4, 4)
+
+[sub_resource type="StandardMaterial3D" id="Material_blue"]
+albedo_color = Color(0.20, 0.55, 1.0, 1)
+
+[node name="PlayerHq" type="StaticBody3D"]
+script = ExtResource("1_phq")
+collision_layer = 32
+collision_mask = 1
+input_ray_pickable = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_hq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_hq")
+material_override = SubResource("Material_blue")
+
+[node name="NavigationObstacle3D" type="NavigationObstacle3D" parent="."]
+radius = 3.0
+height = 4.0
+avoidance_enabled = true

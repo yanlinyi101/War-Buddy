@@ -2,6 +2,32 @@
 
 All notable changes to War Buddy are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows semantic versioning loosely — pre-1.0 minor bumps may break save-format or API assumptions.
 
+## [v0.15.0] — 2026-05-13
+
+Base setup per `docs/specs/v0.15.0-base-setup-plan.md` — the graybox finally observes "real RTS state" instead of "3 enemy buildings + 1 hero". v0.15.0 ships **placement and identity only**; v0.15.1 layers terrain, v0.15.2 wires the worker gather loop.
+
+### Added
+- **Map scaled to 60×60** (was 36×36). `world.tscn` ground mesh + nav-mesh region rebuilt to the new extent. Camera re-centered to origin with `size=44`, `bounds_min/max=(-30,30)`, `max_ortho_size=60`.
+- **Player main base SW** (`scenes/player_hq.tscn` + `scripts/player_hq.gd`) — 4×4×4 blue HQ at `(-22, 2, 22)`. Joins `friendly_structures` group on `_ready` and self-registers with `GameState.register_completed_building(player, hq)` so HQ's `+10 supply_provided` lands on `FactionState.supply_max` automatically.
+- **Enemy main base NE** (`scenes/enemy_hq.tscn`) — 4×4×4 red HQ at `(22, 2, -22)`, reuses `EnemyBuilding.gd` (HP 1500, attack_range 8, defensive shots intact). Replaces the three old scattered enemy buildings.
+- **6 starting workers** (`scenes/worker.tscn`) — capsule variant of `squad_unit.tscn`, yellow tint, `unit_def_id = &"worker_basic"`. `SquadUnit._ready` gained a `unit_def_id` loader that overrides `max_hp / armor / armor_class / dmg_type` from `EntityLibrary` so the worker scene reads its stats from `data/units/worker_basic.tres` (HP 45, light, normal). All 6 join the `squad_units` group.
+- **Player main resources** — 8 mineral patches arcing north of player HQ + 1 gas geyser NW; layout per plan §3.3.
+- **Enemy main resources** — 8 mineral patches + 1 gas geyser mirrored at the NE corner.
+- **`scripts/state/resource_node_body.gd`** — `StaticBody3D` wrapper holding a `ResourceNodeDef`; exposes `harvest()` / `is_depleted()`. Joins `resource_nodes` + `resource_nodes_{mineral,gas}` groups.
+- **`GameState.resource_nodes(resource_type)`** — scene-group-backed query returning mineral / gas / (or all) nodes.
+- **Bootstrap hooks** — after `mark_match_started`, sweeps `friendly_structures` group to call `register_completed_building`. Counts workers via `unit_def_id == &"worker_basic"`. New boot log lines: `World scale: 60x60; player main SW; enemy main NE`, `v0.15.0 spawned 6 player workers`.
+- **Hero spawn relocated** to `(-18, 0.75, 18)` (south of player HQ).
+- 18 new GUT cases (`test_player_hq`, `test_worker_spawn`, `test_resource_node_body`, `test_v015_world_init`). Total: **290/290** green (plan target was 284 — beat it by 6).
+
+### Changed
+- `world.tscn` — `EnemyBuildingA/B/C` deleted; enemy HQ replaces them. `MatchState.buildings_remaining` now starts at 1 (just the enemy HQ).
+- `squad_unit.gd::_ready` — when `unit_def_id` is non-empty, looks up `EntityLibrary.unit(id)` and overrides stat exports from the def. Empty `unit_def_id` keeps prior behavior so v0.2 dev capsules are unaffected.
+
+### Notes
+- **Explicitly out of scope** (per plan §2.6): worker gather behavior (v0.15.2), `build` order execution (v0.16), multi-path terrain / walls (v0.15.1), central gold mine (v0.15.1), natural expansions (v0.15.1), HQ producing units (v0.17), worker selection/orderability (v0.16), enemy faction in `GameState.all_factions()` (v0.16+).
+- `EnemyBuilding.gd` defensive attack iterates `squad_units` — workers are now valid targets in theory, but the enemy HQ at NE is ~50 m from worker positions at SW, well outside the 8 m attack range. No accidental focus-fire.
+- The `BattlefieldSnapshotBuilder` now sees a real RTS opener for the first time: 6 workers + hero on the friendly side; 1 HQ + 16 minerals + 2 gas geysers visible to the snapshot via group queries.
+
 ## [v0.14.0] — 2026-05-10
 
 ### Added

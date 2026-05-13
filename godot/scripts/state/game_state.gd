@@ -83,6 +83,15 @@ func all_squad_units() -> Array:
 func all_enemy_buildings() -> Array:
 	return get_tree().get_nodes_in_group(GROUP_ENEMY_BUILDINGS)
 
+func resource_nodes(resource_type: StringName) -> Array:
+	# v0.15.0 — scene-group-backed query for ResourceNodeBody instances.
+	# `resource_type` is "mineral" or "gas"; pass &"" for all.
+	if resource_type == &"mineral":
+		return get_tree().get_nodes_in_group("resource_nodes_mineral")
+	if resource_type == &"gas":
+		return get_tree().get_nodes_in_group("resource_nodes_gas")
+	return get_tree().get_nodes_in_group("resource_nodes")
+
 func enemy_buildings_alive() -> int:
 	var n := 0
 	for b in all_enemy_buildings():

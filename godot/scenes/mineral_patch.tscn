@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3 uid="uid://mineralpatch"]
+
+[ext_resource type="Script" path="res://scripts/state/resource_node_body.gd" id="1_mp"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_mineral"]
+size = Vector3(1.5, 1.0, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_mineral"]
+size = Vector3(1.5, 1.0, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mineral"]
+albedo_color = Color(0.30, 0.75, 1.0, 1)
+metallic = 0.4
+roughness = 0.4
+
+[node name="MineralPatch" type="StaticBody3D"]
+script = ExtResource("1_mp")
+collision_layer = 1024
+collision_mask = 1
+input_ray_pickable = true
+resource_type = &"mineral"
+initial_amount = 1500
+harvest_amount_per_cycle = 5
+max_concurrent_workers = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_mineral")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_mineral")
+material_override = SubResource("StandardMaterial3D_mineral")
