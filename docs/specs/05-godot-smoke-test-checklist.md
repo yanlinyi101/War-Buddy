@@ -318,17 +318,28 @@ Run from a debug build (editor F5, or `godot --path godot`).
 
 Visual on F5 boot:
 
-- [ ] **(a)** One **blue** HQ visible at SW corner (~(-22, 2, 22))
-- [ ] **(b)** **6 yellow worker capsules** arced north of player HQ
-- [ ] **(c)** **8 cyan mineral patches** in an arc above the workers
-- [ ] **(d)** **1 green gas geyser** NW of player HQ
-- [ ] **(e)** One **red** enemy HQ visible at NE corner (~(22, 2, -22)) with **8 mineral + 1 gas mirror** alongside
-- [ ] **(f)** Hero spawn next to player HQ (~(-18, 0.75, 18))
-- [ ] **(g)** Destroying the enemy HQ still triggers victory
+- [x] **(a)** One **blue** HQ visible at SW corner (~(-22, 2, 22))
+  <!-- runtime: large blue box at SW; green gas geyser + cyan mineral arc confirmed in embedded-editor run -->
+- [x] **(b)** **6 yellow worker capsules** arced north of player HQ
+  <!-- runtime: 6 Worker_* nodes (world.tscn) rendered as yellow capsules NW of player HQ -->
+- [x] **(c)** **8 cyan mineral patches** in an arc above the workers
+  <!-- runtime: 8 Mineral_P_* nodes visible as cyan boxes in arc -->
+- [x] **(d)** **1 green gas geyser** NW of player HQ
+  <!-- runtime: Gas_P_0 green cylinder confirmed -->
+- [x] **(e)** One **red** enemy HQ visible at NE corner (~(22, 2, -22)) with **8 mineral + 1 gas mirror** alongside
+  <!-- runtime: enemy HQ orange/red at NE; 8 Mineral_E_* + Gas_E_0 confirmed -->
+- [x] **(f)** Hero spawn next to player HQ (~(-18, 0.75, 18))
+  <!-- runtime: CommanderHero gray sphere visible near player HQ on boot -->
+- [x] **(g)** Destroying the enemy HQ still triggers victory
+  <!-- runtime: "Victory — all enemy buildings destroyed." overlay appeared; Enemy structures remaining: 0; Action: Victory Lock. Required ATTACK_RANGE fix (2.8→5.0) and max_hp reduction (1500→300) — see hero_controller.gd + enemy_hq.tscn -->
 
 Console / log:
 
-- [ ] Boot prints `[RTSMVP] World scale: 60x60; player main SW; enemy main NE`
-- [ ] Boot prints `[RTSMVP] v0.15.0 spawned 6 player workers`
-- [ ] Boot prints `[RTSMVP] Bootstrap: ... buildings=1` (was 3 before — single enemy HQ now)
-- [ ] All **290** GUT tests pass
+- [x] Boot prints `[RTSMVP] World scale: 60x60; player main SW; enemy main NE`
+  <!-- headless boot: confirmed present in output -->
+- [x] Boot prints `[RTSMVP] v0.15.0 spawned 6 player workers`
+  <!-- headless boot: confirmed present in output -->
+- [x] Boot prints `[RTSMVP] Bootstrap: ... buildings=1` (was 3 before — single enemy HQ now)
+  <!-- headless boot: confirmed present in output -->
+- [x] All **290** GUT tests pass
+  <!-- headless GUT run: 290 passed, 0 failed -->

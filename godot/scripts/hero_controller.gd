@@ -20,7 +20,7 @@ signal respawned()
 @export var accel_time_s: float = 0.10
 @export var stop_snap_speed: float = 0.05
 
-const ATTACK_RANGE := 2.8
+const ATTACK_RANGE := 5.0   # must exceed NavObstacle radius (3.0) + agent radius (0.75)
 const ATTACK_DAMAGE := 20
 const ATTACK_INTERVAL := 0.75
 
